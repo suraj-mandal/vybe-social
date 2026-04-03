@@ -10,7 +10,7 @@ ALLOWED_HOSTS = ["*"]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-REST_FRAMEWORK["DEFAULT_RENDERED_CLASSES"] = [ # noqa: F405
+REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [ # noqa: F405
     "rest_framework.renderers.JSONRenderer",
     "rest_framework.renderers.BrowsableAPIRenderer",
 ]
