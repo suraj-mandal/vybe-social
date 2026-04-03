@@ -1,0 +1,33 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+guides/
+
+# Django
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+# Don't ignore docker-compose.yml or Dockerfile — those are part of the project.
+# Only ignore runtime stuff.
+
+# OS
+.DS_Store
+Thumbs.db
