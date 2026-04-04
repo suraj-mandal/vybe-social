@@ -142,6 +142,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+PASSWORD_RESET_TIMEOUT = 86400
+
 # Django REST Framework configs
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES"    : [

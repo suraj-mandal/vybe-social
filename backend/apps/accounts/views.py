@@ -1,14 +1,18 @@
 from typing import Any
 
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.db.migrations import serializer
+from django.db.models import Model
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .emails import send_verification_email
+from .emails import send_verification_email, send_password_reset_email
 from .models import User
-from .serializers import UserSerializer, RegisterSerializer, VerifyEmailSerializer
+from .serializers import UserSerializer, RegisterSerializer, VerifyEmailSerializer, PasswordResetRequestSerializer, \
+    PasswordResetConfirmSerializer, ChangePasswordSerializer
 
 
 # Create your views here.
@@ -209,5 +213,154 @@ class ResendVerificationView(generics.GenericAPIView):
 
         return Response(
             {"detail": "Verification email sent."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetRequestView(generics.GenericAPIView):
+    """
+    Handles the password reset request process.
+
+    This class processes a user's request to reset their password. By validating the
+    provided email address associated with a user account, it initiates the sending
+    of a password reset link. If no account exists for the given email, the system
+    responds uniformly to avoid revealing user existence. It is particularly useful
+    in improving the security of user account recovery workflows.
+
+    :ivar serializer_class: The serializer class used for validating password reset request data.
+    :type serializer_class: Serializer class
+    :ivar permission_classes: List of permission classes applied for this view.
+    :type permission_classes: List of permissions
+    """
+    serializer_class = PasswordResetRequestSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        """
+        Handles the password reset process by validating the provided email and sending
+        a password reset link to the associated user account, if it exists. If no user
+        is found with the provided email, no error is raised, and the response is the
+        same to prevent exposing user existence.
+
+        :param request: The HTTP request containing the data for initiating password
+            reset, including the email address to look up.
+        :param args: Additional positional arguments.
+        :param kwargs: Additional keyword arguments.
+        :return: A Response object with a message indicating that, if an account
+            associated with the provided email address exists, a password reset link
+            has been sent.
+        :rtype: Response
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+
+        try:
+            user = User.objects.get(email=email)
+            send_password_reset_email(user)
+        except User.DoesNotExist:
+            pass
+
+        return Response(
+            {
+                "detail": (
+                    "If an account with this email exists, "
+                    "a password reset link has been sent."
+                )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(generics.GenericAPIView):
+    """
+    Handles password reset confirmation functionality.
+
+    This class is a generic API view that processes password reset confirmation
+    requests. It ensures that the incoming data is validated through the
+    associated serializer, updates the user's password, and provides a response
+    indicating the success of the operation.
+
+    :ivar serializer_class: The serializer class used for validating the incoming
+        request data and extracting required fields for processing.
+    :type serializer_class: PasswordResetConfirmSerializer
+    :ivar permission_classes: Permission classes that specify access control for
+        this view.
+    :type permission_classes: list[type[AllowAny]]
+    """
+    serializer_class = PasswordResetConfirmSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        """
+        Handles POST requests for resetting a user's password. Validates the incoming data
+        using the serializer, updates the user's password, and saves the changes to the
+        database. Returns a success response upon completion.
+
+        :param request: The HTTP request object containing user data.
+        :type request: Request
+        :param args: Additional positional arguments.
+        :type args: list[Any]
+        :param kwargs: Additional keyword arguments.
+        :type kwargs: dict[str, Any]
+        :return: HTTP response indicating success of the password reset operation.
+        :rtype: Response
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data["user"]
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password"])
+
+        return Response(
+            {"detail": "Password has been reset successfully."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    """
+    Handles password change functionality for authenticated users.
+
+    This class provides an endpoint where authenticated users can change their passwords.
+    The password validation and update process is handled securely using a serializer.
+
+    :ivar serializer_class: Serializer responsible for validating the input data for
+        changing the password.
+    :type serializer_class: type
+    :ivar permission_classes: Permissions required to access this view. By default, this
+        view is restricted to authenticated users.
+    :type permission_classes: list[type]
+    """
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        """
+        Handles the logic for updating the user's password based on the provided request data.
+        This method validates the input data using a serializer, updates the user's password
+        if the data is valid, and responds with a success message upon successful completion.
+
+        :param request: The HTTP request containing the password update data.
+        :type request: Request
+        :param args: Additional positional arguments passed to the method.
+        :type args: list[Any]
+        :param kwargs: Additional keyword arguments passed to the method.
+        :type kwargs: dict[str, Any]
+        :return: Returns a Response object containing a success message and HTTP 200 status
+                 code if the password is updated successfully.
+        :rtype: Response
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password"])
+
+        return Response(
+            {"detail": "Password changed successfully."},
             status=status.HTTP_200_OK,
         )

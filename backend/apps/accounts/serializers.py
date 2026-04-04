@@ -2,6 +2,7 @@ import re
 
 from typing import Any
 
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_str
@@ -10,6 +11,8 @@ from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
 
 from .models import User
+
+type AttrType = dict[str, Any]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -199,16 +202,16 @@ class VerifyEmailSerializer(serializers.Serializer):
     uid = serializers.CharField()
     token = serializers.CharField()
 
-    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+    def validate(self, attrs: AttrType) -> AttrType:
         """
         Validates the user verification process by decoding the given UID, checking
         the provided token, and ensuring the user is not already verified.
 
         :param attrs: A dictionary containing the user verification data with the keys
                       "uid" and "token".
-        :type attrs: dict[str, Any]
+        :type attrs: AttrType
         :return: The updated attributes dictionary containing the user object.
-        :rtype: dict[str, Any]
+        :rtype: AttrType
         :raises serializers.ValidationError: If the UID is invalid or expired,
                                               if the token is invalid or expired,
                                               or if the user is already verified.
@@ -235,4 +238,155 @@ class VerifyEmailSerializer(serializers.Serializer):
             )
 
         attrs["user"] = user
+        return attrs
+
+
+# serializer for resetting the password
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """
+    Handles the serialization and validation for password reset requests.
+
+    This class is used in scenarios where a user needs to reset their password.
+    It validates the input email address and ensures it adheres to the required
+    format for further processing of the password reset request.
+
+    :ivar email: The email address of the user requesting the password reset.
+    :type email: serializers.EmailField
+    """
+    email = serializers.EmailField()
+
+
+# serializer for confirming the password
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    Handles user password reset requests.
+
+    This serializer is responsible for validating and processing user password reset
+    requests. It validates the provided user ID and token, ensures the new passwords
+    match, and verifies the token's authenticity and expiration.
+
+    :ivar uid: Base64 encoded user identifier used to locate the user in the
+        password reset process.
+    :type uid: str
+    :ivar token: Token used for user verification during password reset.
+    :type token: str
+    :ivar new_password: The new password the user wishes to set. This field is write-only,
+        must meet the minimum length requirement, and is validated against defined password
+        constraints.
+    :type new_password: str
+    :ivar new_password_confirm: A confirmation of the new password to ensure the user has
+        provided matching passwords. This field is write-only and must meet the minimum
+        length requirement.
+    :type new_password_confirm: str
+    """
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        validators=[validate_password],
+    )
+    new_password_confirm = serializers.CharField(
+        write_only=True,
+        min_length=8,
+    )
+
+    def validate(self, attrs: AttrType) -> AttrType:
+        """
+        Validates the input attributes for password reset functionality.
+
+        This method ensures that the provided passwords match, validates the user ID
+        and token for resetting the password, and retrieves the associated user
+        object. If any validation checks fail, appropriate errors are raised.
+
+        :param attrs: A dictionary containing the attributes required for validation.
+            Keys in the dictionary typically include ``new_password``,
+            ``new_password_confirm``, ``uid``, and ``token``.
+        :type attrs: AttrType
+
+        :return: The validated attributes, updated to include the retrieved user object.
+        :rtype: AttrType
+
+        :raises serializers.ValidationError: Raised if:
+            - The provided passwords do not match.
+            - The ``uid`` is invalid or expired.
+            - The reset token is invalid or expired.
+        """
+        if attrs["new_password"] != attrs["new_password_confirm"]:
+            raise serializers.ValidationError({
+                "new_password_confirm": "Passwords do not match."
+            })
+
+        try:
+            user_id = force_str(urlsafe_base64_decode(attrs["uid"]))
+            user = User.objects.get(pk=user_id)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise serializers.ValidationError({
+                "uid": "Invalid or expired reset link."
+            })
+
+        # verify the token
+        if not default_token_generator.check_token(user, attrs["token"]):
+            raise serializers.ValidationError({
+                "token": "Invalid or expired reset link."
+            })
+
+        attrs["user"] = user
+        return attrs
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Handles password change functionality for a user.
+
+    Provides validation for the old password and ensures the new password
+    matches confirmation. Enables secure management of password updates.
+
+    :ivar old_password: The user's current password. Used for validation purposes.
+    :type old_password: str
+    :ivar new_password: The user's new password. Must meet provided validation and
+        password policy requirements.
+    :type new_password: str
+    :ivar new_password_confirm: Confirmation for the new password. Should match
+        new_password for validation.
+    :type new_password_confirm: str
+    """
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        validators=[validate_password],
+    )
+
+    new_password_confirm = serializers.CharField(
+        write_only=True,
+        min_length=8,
+    )
+
+    def validate_old_password(self, value: str) -> str:
+        """
+        Validates the provided old password against the current password of the user.
+        The function ensures that the input password matches the user's existing password.
+
+        :param value: The old password provided by the user.
+        :type value: str
+        :return: The validated old password if it matches the user's current password.
+        :rtype: str
+        :raises serializers.ValidationError: If the provided password does not match the
+            user's existing password.
+        """
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError(
+                "Current password is incorrect."
+            )
+
+        return value
+
+    def validate(self, attrs: AttrType) -> AttrType:
+        if attrs["new_password"] != attrs["new_password_confirm"]:
+            raise serializers.ValidationError({
+                "new_password_confirm": "Passwords do not match."
+            })
+
         return attrs
