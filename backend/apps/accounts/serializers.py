@@ -3,6 +3,9 @@ import re
 from typing import Any
 
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 
 from rest_framework import serializers
 
@@ -177,3 +180,59 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
 
         return user
+
+
+class VerifyEmailSerializer(serializers.Serializer):
+    """
+    Facilitates email verification by handling and validating a unique identifier
+    (uid) and token received from the client.
+
+    This serializer is used to decode the uid, validate the user associated with it,
+    and verify the provided token. It ensures that only valid, non-expired tokens are
+    accepted and checks whether the user's email has already been verified.
+
+    :ivar uid: Unique identifier for the user, encoded in the verification link.
+    :type uid: str
+    :ivar token: Verification token generated for the user.
+    :type token: str
+    """
+    uid = serializers.CharField()
+    token = serializers.CharField()
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        """
+        Validates the user verification process by decoding the given UID, checking
+        the provided token, and ensuring the user is not already verified.
+
+        :param attrs: A dictionary containing the user verification data with the keys
+                      "uid" and "token".
+        :type attrs: dict[str, Any]
+        :return: The updated attributes dictionary containing the user object.
+        :rtype: dict[str, Any]
+        :raises serializers.ValidationError: If the UID is invalid or expired,
+                                              if the token is invalid or expired,
+                                              or if the user is already verified.
+        """
+        # decoding the uid
+        try:
+            user_id = force_str(urlsafe_base64_decode(attrs["uid"]))
+            user = User.objects.get(pk=user_id)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise serializers.ValidationError(
+                {"uid": "Invalid or expired verification link."}
+            )
+
+        # verifying the token
+        if not default_token_generator.check_token(user, attrs["token"]):
+            raise serializers.ValidationError(
+                {"token": "Invalid or expired verification link."}
+            )
+
+        # check if the user is already verified or not
+        if user.is_verified:
+            raise serializers.ValidationError(
+                "This email has already been verified."
+            )
+
+        attrs["user"] = user
+        return attrs

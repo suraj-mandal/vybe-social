@@ -6,8 +6,9 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .emails import send_verification_email
 from .models import User
-from .serializers import UserSerializer, RegisterSerializer
+from .serializers import UserSerializer, RegisterSerializer, VerifyEmailSerializer
 
 
 # Create your views here.
@@ -102,6 +103,9 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
+        # send the verification email
+        send_verification_email(user)
+
         # generate JWT tokens for the newly created user
         refresh = RefreshToken.for_user(user)
 
@@ -109,9 +113,101 @@ class RegisterView(generics.CreateAPIView):
             {
                 "user"  : RegisterSerializer(user).data,
                 "tokens": {
-                    "access": str(refresh.access_token),
+                    "access" : str(refresh.access_token),
                     "refresh": str(refresh)
                 }
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+# creating the verification email view
+class VerifyEmailView(generics.GenericAPIView):
+    """
+    Handles the email verification process.
+
+    This class-based view is responsible for verifying a user's email by processing
+    a POST request. It uses a serializer to validate the request data and updates
+    the user's verification status upon successful validation.
+
+    :ivar serializer_class: The serializer class used to validate the request data.
+    :type serializer_class: VerifyEmailSerializer
+    :ivar permission_classes: The list of permission classes required to access this view.
+    :type permission_classes: list
+    """
+    serializer_class = VerifyEmailSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        """
+        Handles the POST request for email verification. Validates the request data using a serializer,
+        marks the user as verified upon successful validation, and updates the `is_verified`
+        attribute in the database.
+
+        :param request: The HTTP request object containing the data to be validated.
+        :type request: Request
+        :param args: Additional positional arguments.
+        :type args: list[Any]
+        :param kwargs: Additional keyword arguments.
+        :type kwargs: dict[str, Any]
+        :return: A Response object containing a success message and a 200 status code.
+        :rtype: Response
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data["user"]
+        user.is_verified = True
+        user.save(update_fields=["is_verified"])
+
+        return Response(
+            {"detail": "Email verified successfully."},
+            status=status.HTTP_200_OK,
+        )
+
+
+# resend the verification email, if the user is logged in, only
+# work if the user is not only verified.
+class ResendVerificationView(generics.GenericAPIView):
+    """
+    Handles resending verification emails for authenticated users.
+
+    This view allows authenticated users who have not yet verified their email
+    to request a new verification email to be sent. If the email is already
+    verified, a response indicating that verification has already been completed
+    is returned.
+
+    :ivar permission_classes: Specifies the permissions required for accessing
+        this view.
+    :type permission_classes: list
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        """
+        Handles the HTTP POST request to send an email verification link to
+        the user. If the user's email is already verified, it returns an
+        appropriate error response. If the email is not verified, it triggers
+        a verification email to be sent and returns a success response.
+
+        :param request: Represents the HTTP request containing metadata
+            about the request and user-related data.
+        :param args: Additional positional arguments.
+        :param kwargs: Additional keyword arguments.
+        :return: Response object containing status and detail message.
+        :rtype: Response
+        """
+        user: User = request.user  # type: ignore[assignment]
+
+        if user.is_verified:
+            return Response(
+                {"detail": "Email is already verified"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        send_verification_email(user)
+
+        return Response(
+            {"detail": "Verification email sent."},
+            status=status.HTTP_200_OK,
         )

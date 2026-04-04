@@ -117,6 +117,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Email settings
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="noreply@vybe.social")
+
+# Frontend URL
+FRONTEND_URL = env.str("FRONTEND_URL", default="http://0.0.0.0:3000")
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
