@@ -9,6 +9,15 @@ from .managers import CustomUserManager
 
 # Create your models here.
 class User(AbstractBaseUser, PermissionsMixin):
+    """
+    Represents a user entity in the system.
+
+    This class is designed to encapsulate the attributes and behavior of a user in
+    the application. It includes attributes like `username`, `email`, and other
+    user-related details, which are used to manage and represent user data. It
+    is commonly used for authentication, user profiles, and data management.
+
+    """
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
