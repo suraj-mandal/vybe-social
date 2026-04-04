@@ -19,6 +19,14 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
+# create a non-root user
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g ${GID} appuser \
+    && useradd -m -u ${UID} -g ${GID} appuser \
+    && chown -R appuser:appuser /app
+
+USER appuser
 
 # copying the project code \
 COPY . .
