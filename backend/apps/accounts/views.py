@@ -1,8 +1,14 @@
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from typing import Any
+
+from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, RegisterSerializer
+
 
 # Create your views here.
 
@@ -52,3 +58,60 @@ class UserDetailView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+
+
+class RegisterView(generics.CreateAPIView):
+    """
+    Handles user registration and token generation.
+
+    This class is responsible for enabling user registration by processing the incoming
+    request data, validating it, and saving a new user to the database if the data is
+    valid. Upon successful registration, JWT tokens are generated and returned in the
+    response to facilitate authentication.
+
+    :ivar serializer_class: The serializer class used for validating and processing
+                            incoming user data.
+    :type serializer_class: type
+    :ivar permission_classes: The list of permission classes that define access
+                              restrictions for this view.
+    :type permission_classes: list
+    """
+    serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        """
+        Handles the creation of a new user and generates JWT tokens for authentication.
+
+        This method validates incoming request data using a serializer, creates a new
+        user if the data is valid, and generates JWT tokens (access and refresh) for
+        the newly created user. The response contains the serialized user data and
+        the generated tokens.
+
+        :param request: The HTTP request object containing the user data to be
+                        processed.
+        :type request: Request
+        :param args: Additional positional arguments that may be provided.
+        :type args: list[Any]
+        :param kwargs: Additional keyword arguments that may be provided.
+        :type kwargs: dict[str, Any]
+        :return: A Response object containing the serialized user data and JWT tokens.
+        :rtype: Response
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        # generate JWT tokens for the newly created user
+        refresh = RefreshToken.for_user(user)
+
+        return Response(
+            {
+                "user"  : RegisterSerializer(user).data,
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh)
+                }
+            },
+            status=status.HTTP_201_CREATED,
+        )
