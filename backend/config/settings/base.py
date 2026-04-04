@@ -44,7 +44,9 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "rest_framework"
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 LOCAL_APPS = [
@@ -115,6 +117,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Email settings
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="noreply@vybe.social")
+
+# Frontend URL
+FRONTEND_URL = env.str("FRONTEND_URL", default="http://0.0.0.0:3000")
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
@@ -134,15 +142,27 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+PASSWORD_RESET_TIMEOUT = 86400
+
 # Django REST Framework configs
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES"    : [
         "rest_framework.permissions.IsAuthenticated"
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
     ],
     "DEFAULT_PAGINATION_CLASS"      : "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE"                     : 20
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME"   : timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME"  : timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS"   : True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES"       : ("Bearer",),
 }
