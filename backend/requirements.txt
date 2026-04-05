@@ -4,3 +4,7 @@ psycopg2-binary==2.9.11
 environs==15.0.0
 gunicorn==25.3.0
 djangorestframework-simplejwt==5.5.1
+requests==2.33.1
+pydantic==2.12.5
+django-redis==6.0.0
+twilio==9.10.4

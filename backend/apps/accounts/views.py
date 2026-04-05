@@ -1,18 +1,24 @@
 from typing import Any
+from urllib.parse import uses_netloc
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db.migrations import serializer
 from django.db.models import Model
+from jwt.algorithms import AllowedOKPKeys
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from twilio.rest.lookups.v1 import phone_number
 
 from .emails import send_verification_email, send_password_reset_email
-from .models import User
+from .models import User, SocialAccount
 from .serializers import UserSerializer, RegisterSerializer, VerifyEmailSerializer, PasswordResetRequestSerializer, \
-    PasswordResetConfirmSerializer, ChangePasswordSerializer
+    PasswordResetConfirmSerializer, ChangePasswordSerializer, SocialAuthSerializer, SendOTPSerializer, \
+    VerifyOTPSerializer
+from .services import SocialAuthUser, generate_otp, verify_otp
+from .sms_backends import get_sms_backend
 
 
 # Create your views here.
@@ -364,3 +370,245 @@ class ChangePasswordView(generics.GenericAPIView):
             {"detail": "Password changed successfully."},
             status=status.HTTP_200_OK,
         )
+
+
+class SocialAuthView(generics.GenericAPIView):
+    """
+    Handles social authentication, user creation, and linking for third-party login providers.
+
+    The SocialAuthView class is designed to facilitate third-party social authentication. It allows
+    social account users to log in by either retrieving their existing user account or creating a
+    new user account that links to the social account. The class generates JWT tokens for authentication
+    purposes upon successful login or account creation. It leverages serializers, permissions, and token
+    generation to complete the authentication process.
+
+    :ivar serializer_class: Specifies the serializer used for validating the incoming request data.
+    :type serializer_class: SocialAuthSerializer
+
+    :ivar permission_classes: Defines the permission classes that control access to this view.
+    :type permission_classes: List[AllowAny]
+    """
+    serializer_class = SocialAuthSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        """
+        Handles the creation or retrieval of a user account based on social login information
+        provided through a request. If the social account already exists, its associated user
+        is retrieved. Otherwise, a new user is created or linked to the social account depending
+        on the existence of a user with the same email. Generates JWT tokens for authentication
+        and wraps the results in a response.
+
+        :param request: An HTTP request object containing the social login data.
+        :type request: Request
+
+        :param args: Additional positional arguments.
+        :type args: list[Any]
+
+        :param kwargs: Additional keyword arguments.
+        :type kwargs: dict[str, Any]
+
+        :return: A response containing the serialized user information and generated JWT tokens.
+        :rtype: Response
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        provider = serializer.validated_data["provider"]
+        user_info: SocialAuthUser = serializer.validated_data["user_info"]
+
+        # Step 1: trying to fina an existing social media account
+        try:
+            social_account = SocialAccount.objects.select_related("user").get(
+                provider=provider,
+                provider_user_id=user_info.provider_user_id
+            )
+            user = social_account.user
+
+        except SocialAccount.DoesNotExist:
+            # Step 2: No social account found, Check if a user with
+            # this email already exists (registered via email/password)
+            user, created = User.objects.get_or_create(
+                email=user_info.email,
+                defaults={
+                    "username"   : self._generate_username(user_info),
+                    "first_name" : user_info.first_name,
+                    "last_name"  : user_info.last_name,
+                    "is_verified": True,  # already verified by Google / facebook
+                },
+            )
+
+            if created:
+                user.set_unusable_password()
+                user.save(update_fields=["password"])
+
+            # Step 3: Link the social account to the user
+            SocialAccount.objects.create(
+                user=user,
+                provider=provider,
+                provider_user_id=user_info.provider_user_id,
+            )
+
+        # generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+
+        return Response(
+            {
+                "user"  : UserSerializer(user).data,
+                "tokens": {
+                    "access" : str(refresh.access_token),
+                    "refresh": str(refresh)
+                }
+            }
+        )
+
+    @staticmethod
+    def _generate_username(user_info: SocialAuthUser) -> str:
+        """
+        Generates a unique username based on the email provided in the user's information.
+        The username is derived from the portion of the email before the "@" symbol, with
+        non-alphanumeric characters replaced by underscores. If the resulting username
+        already exists in the database, a numeric suffix is appended and the process repeats
+        until a unique username is created.
+
+        :param user_info: A dictionary containing user information. Must include an 'email' key.
+        :type user_info: SocialAuthUser
+        :return: A unique username generated for the user.
+        :rtype: str
+        """
+        import secrets
+
+        base = user_info.email.split("@")[0]
+
+        import re
+        base = re.sub(r"[^a-zA-Z0-9_]", "_", base).lower()
+
+        base = base[:25]
+
+        username = base
+
+        while User.objects.filter(username=username).exists():
+            suffix = secrets.randbelow(9000) + 1000
+            username = f"{base}_{suffix}"
+
+        return username
+
+
+# creating view for otp sending and verification
+class SendOTPView(generics.GenericAPIView):
+    """
+    Handles sending of OTP (One-Time Password) for phone number verification.
+
+    This class provides an endpoint to handle HTTP POST requests to send an OTP. The OTP is
+    generated and sent via an SMS backend, enabling phone number verification. It uses the
+    `SendOTPSerializer` for validating input data and employs an SMS service for delivering
+    the OTP to the specified phone number.
+
+    :ivar serializer_class: The serializer class used for validating input data.
+    :type serializer_class: type
+    :ivar permission_classes: The permission classes that determine access to this view.
+    :type permission_classes: list[type]
+    """
+    serializer_class = SendOTPSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        """
+        Handles the HTTP POST request to send an OTP (One-Time Password) for phone number
+        verification. The OTP is generated and sent via an SMS backend.
+
+        :param request: The HTTP request object containing the incoming data.
+        :type request: Request
+        :param args: Additional positional arguments.
+        :type args: list[Any]
+        :param kwargs: Additional keyword arguments.
+        :type kwargs: dict[str, Any]
+        :return: An HTTP response with a success message if the OTP was sent successfully,
+            or an error message in case of failure.
+        :rtype: Response
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        phone_number = serializer.validated_data["phone_number"]
+
+        try:
+            otp = generate_otp(phone_number)
+        except ValueError as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        # Send the OTP via SMS
+        sms_backend = get_sms_backend()
+        sms_backend.send(
+            phone_number=phone_number,
+            message=f"Your Vybe verification code is: {otp}. "
+                    f"It expires in 5 minutes.",
+        )
+
+        return Response(
+            {"detail": "OTP sent successfully."},
+            status=status.HTTP_200_OK,
+        )
+
+
+# view for verifying the otp
+class VerifyOTPView(generics.GenericAPIView):
+    serializer_class = VerifyOTPSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        phone_number = serializer.validated_data["phone_number"]
+        otp = serializer.validated_data["otp"]
+
+        try:
+            verify_otp(phone_number, otp)
+        except ValueError as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # now let's find or create the user
+        user, created = User.objects.get_or_create(
+            phone_number=phone_number,
+            defaults={
+                "email"      : f"{phone_number}@phone.vybe.local",
+                "username"   : self._generate_phone_username(phone_number),
+                "is_verified": True,  # phone is verified by proving they recieve otp
+            },
+        )
+
+        if created:
+            # the user is new, so they should not have any password
+            user.set_unusable_password()
+            user.save(update_fields=["password", ])
+
+        # generating the JWT tokens for the newly created user
+        refresh = RefreshToken.for_user(user)
+
+        # returning the response
+        return Response(
+            {
+                "user"  : UserSerializer(user).data,
+                "tokens": {
+                    "access" : str(refresh.access_token),
+                    "refresh": str(refresh),
+                }
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @staticmethod
+    def _generate_phone_username(phone_number: str) -> str:
+        import uuid
+
+        last_digits = phone_number[-4:]
+        suffix = uuid.uuid4().hex[:8]
+
+        return f"user_{last_digits}_{suffix}"
