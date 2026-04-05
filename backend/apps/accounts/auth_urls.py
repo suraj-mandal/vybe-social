@@ -44,4 +44,10 @@ urlpatterns = [
         views.VerifyOTPView.as_view(),
         name="otp-verify",
     ),
+    path(
+        "logout/", views.LogoutFromCurrentDeviceView.as_view(), name="logout",
+    ),
+    path(
+        "logout-all/", views.LogoutFromAllDevicesView.as_view(), name="logout-all",
+    )
 ]

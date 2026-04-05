@@ -1,22 +1,17 @@
 from typing import Any
-from urllib.parse import uses_netloc
 
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.db.migrations import serializer
-from django.db.models import Model
-from jwt.algorithms import AllowedOKPKeys
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from rest_framework_simplejwt.tokens import RefreshToken
-from twilio.rest.lookups.v1 import phone_number
 
 from .emails import send_verification_email, send_password_reset_email
 from .models import User, SocialAccount
 from .serializers import UserSerializer, RegisterSerializer, VerifyEmailSerializer, PasswordResetRequestSerializer, \
     PasswordResetConfirmSerializer, ChangePasswordSerializer, SocialAuthSerializer, SendOTPSerializer, \
-    VerifyOTPSerializer
+    VerifyOTPSerializer, LogoutSerializer
 from .services import SocialAuthUser, generate_otp, verify_otp
 from .sms_backends import get_sms_backend
 
@@ -612,3 +607,51 @@ class VerifyOTPView(generics.GenericAPIView):
         suffix = uuid.uuid4().hex[:8]
 
         return f"user_{last_digits}_{suffix}"
+
+
+# creating the logout view
+# This will logout from the current device
+class LogoutFromCurrentDeviceView(generics.GenericAPIView):
+    serializer_class = LogoutSerializer
+    permission_classes = [IsAuthenticated]  # only authenticated users can log out
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        refresh_token: RefreshToken = serializer.validated_data["refresh"]
+
+        # blacklist the token
+        refresh_token.blacklist()
+
+        return Response(
+            {"detail": "Successfully logged out."},
+            status=status.HTTP_200_OK,
+        )
+
+
+# This will log out from all the devices for the current user
+class LogoutFromAllDevicesView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+        tokens = OutstandingToken.objects.filter(
+            user=request.user,
+            blacklistedtoken__isnull=True  # tokens that are not blacklisted yet
+        )
+
+        # creating all the blacklist versions of active refresh tokens for the user
+        # logging out from all the devices for the current user.
+        created_blacklisted_tokens = BlacklistedToken.objects.bulk_create(
+            [BlacklistedToken(token=token) for token in tokens]
+        )
+
+        # using len(tokens) here will trigger a DB query again.
+
+        return Response(
+            {
+                "detail": f"Logged out from all devices. "
+                          f"{len(created_blacklisted_tokens)} sessions terminated."
+            },
+            status=status.HTTP_200_OK,
+        )
