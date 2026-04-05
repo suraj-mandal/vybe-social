@@ -2,15 +2,20 @@ import re
 
 from typing import Any
 
-from django.contrib.auth.base_user import AbstractBaseUser
+from django.conf import settings
+
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
+from pydantic import ValidationError
 
 from rest_framework import serializers
 
-from .models import User
+from .models import User, SocialAccount
+from .services import GoogleAuthService, FacebookAuthService, SocialAuthService
+
+from .validators import validate_phone_number
 
 type AttrType = dict[str, Any]
 
@@ -390,3 +395,155 @@ class ChangePasswordSerializer(serializers.Serializer):
             })
 
         return attrs
+
+
+class SocialAuthSerializer(serializers.Serializer):
+    """
+    Serializer for handling social authentication.
+
+    This class is used to validate and process social authentication requests. It verifies
+    access tokens with specified providers and extracts user information. Supported providers
+    include Google and Facebook. The class ensures that the access token is valid for the
+    selected provider before allowing further processing.
+
+    :ivar access_token: Access token for authentication with the social provider.
+    :type access_token: str
+    :ivar provider: The selected social authentication provider. Allowed values are
+        specified in `SocialAccount.Provider`.
+    :type provider: str
+    """
+    access_token = serializers.CharField()
+    provider = serializers.ChoiceField(
+        choices=SocialAccount.Provider
+    )
+
+    def validate(self, attrs: AttrType) -> AttrType:
+        """
+        Validates the provided data by verifying the access token with the specified provider.
+        This function ensures that the access token corresponds to a valid user by communicating
+        with the provider's service and validating its authenticity.
+
+        :param attrs: The data containing the provider and access token to be validated.
+        :type attrs: AttrType
+        :returns: The updated data including the user information obtained from the provider.
+        :rtype: AttrType
+        :raises serializers.ValidationError: If the provider is unsupported or if the access token
+            is invalid for the provider.
+        """
+        provider = attrs["provider"]
+        access_token = attrs["access_token"]
+
+        # Step 1: verify token with the provider
+        provider_services = {
+            SocialAccount.Provider.GOOGLE  : GoogleAuthService,
+            SocialAccount.Provider.FACEBOOK: FacebookAuthService,
+        }
+
+        service: SocialAuthService | None = provider_services.get(provider)
+
+        if not service:
+            raise serializers.ValidationError({
+                "provider": f"Unsupported provider: {provider}"
+            })
+
+        try:
+            user_info = service.verify_token(access_token)
+        except ValueError as e:
+            raise serializers.ValidationError({
+                "access_token": str(e)
+            })
+
+        attrs["user_info"] = user_info
+
+        return attrs
+
+
+# creating the serializers for otp
+class SendOTPSerializer(serializers.Serializer):
+    """
+    Handles the serialization of data for sending an OTP to a user. This serializer
+    validates the phone number format to ensure compliance with specific requirements.
+
+    The class is intended to standardize and validate user input (phone number) for
+    sending OTP services. It ensures the provided phone number complies with the
+    expected format and length.
+
+    :ivar phone_number: The phone number provided for OTP services. Must be between
+        7 and 15 characters long and may optionally start with a '+'.
+    :type phone_number: str
+    """
+    phone_number = serializers.CharField(max_length=20)
+
+    def validate_phone_number(self, value: str) -> str:
+        """
+        Validates a provided phone number string for correctness.
+
+        This function ensures that the input phone number conforms to the expected
+        format using the `validate_phone_number` function. If validation fails, it
+        raises a `serializers.ValidationError` with the error message from the
+        `ValidationError`.
+
+        :param value: The phone number string to validate.
+        :type value: str
+        :return: The validated phone number string if it passes validation.
+        :rtype: str
+        :raises serializers.ValidationError: When the input phone number fails
+            validation.
+        """
+        try:
+            return validate_phone_number(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(str(e))
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    """
+    Serializer for verifying OTP with the associated phone number.
+
+    This serializer is used to validate and process the data required for OTP
+    verification. It ensures that the phone number and OTP provided adhere to
+    the expected formats and constraints.
+
+    :ivar phone_number: The phone number provided for OTP verification.
+    :type phone_number: str
+    :ivar otp: The one-time password provided for verification.
+    :type otp: str
+    """
+    phone_number = serializers.CharField(max_length=20)
+    otp = serializers.CharField(min_length=settings.OTP_LENGTH, max_length=settings.OTP_LENGTH)
+
+    def validate_phone_number(self, value: str) -> str:
+        """
+        Validates a phone number and ensures its correctness.
+
+        This method attempts to validate the given phone number value by using
+        the `validate_phone_number` function. If the validation fails and a
+        `ValidationError` is raised, it re-raises the error as a
+        `serializers.ValidationError` with the error message from the original
+        exception.
+
+        :param value: The phone number string to validate.
+        :type value: str
+        :return: The validated phone number string.
+        :rtype: str
+        :raises serializers.ValidationError: If the phone number is invalid.
+        """
+        try:
+            return validate_phone_number(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(str(e))
+
+    def validate_otp(self, value: str) -> str:
+        """
+        Validates the provided OTP value to ensure it contains only numeric digits.
+
+        :param value: The OTP string to validate.
+        : return: The validated OTP string if it contains only digits.
+        :raises serializers.ValidationError: If the OTP value contains non-digit characters.
+        """
+        if not value.isdigit():
+            raise serializers.ValidationError(
+                "OTP must contain only digits."
+            )
+
+        return value

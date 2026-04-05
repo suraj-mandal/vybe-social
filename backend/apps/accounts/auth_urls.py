@@ -28,5 +28,20 @@ urlpatterns = [
         "change-password/",
         views.ChangePasswordView.as_view(),
         name="change-password"
-    )
+    ),
+    path(
+        "social/",
+        views.SocialAuthView.as_view(),
+        name="social-auth",
+    ),
+    path(
+        "otp/send/",
+        views.SendOTPView.as_view(),
+        name="otp-send",
+    ),
+    path(
+        "otp/verify/",
+        views.VerifyOTPView.as_view(),
+        name="otp-verify",
+    ),
 ]

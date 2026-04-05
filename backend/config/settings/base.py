@@ -117,11 +117,24 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Social Authentication
+GOOGLE_CLIENT_ID = env.str("GOOGLE_CLIENT_ID", default="")
+FACEBOOK_APP_ID = env.str("FACEBOOK_APP_ID", default="")
+FACEBOOK_APP_SECRET = env.str("FACEBOOK_APP_SECRET", default="")
+FACEBOOK_GRAPHQL_VERSION = env.str("FACEBOOK_GRAPHQL_VERSION", default="")
+
 # Email settings
 DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="noreply@vybe.social")
 
 # Frontend URL
 FRONTEND_URL = env.str("FRONTEND_URL", default="http://0.0.0.0:3000")
+
+# Otp Settings
+OTP_LENGTH = 6
+OTP_EXPIRY_SECONDS = 300
+OTP_MAX_ATTEMPTS = 5
+OTP_RATE_LIMIT = 3  # max otp per phone per window
+OTP_RATE_LIMIT_WINDOW = 600  # 10 min rate limit window
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -143,6 +156,23 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 PASSWORD_RESET_TIMEOUT = 86400
+
+# add cache to the application
+CACHES = {
+    "default": {
+        "BACKEND" : "django_redis.cache.RedisCache",
+        "LOCATION": env.str("REDIS_URL", default="redis://redis:6379/0"),
+        "OPTIONS" : {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+        }
+    }
+}
+
+# SMS backend
+SMS_BACKEND = env.str(
+    "SMS_BACKEND",
+    default="apps.accounts.sms_backends.ConsoleSMSBackend",
+)
 
 # Django REST Framework configs
 REST_FRAMEWORK = {
