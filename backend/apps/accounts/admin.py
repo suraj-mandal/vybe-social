@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User, SocialAccount
+from .models import SocialAccount, User
 
 
 # Register your models here.
@@ -15,7 +15,7 @@ class UserAdmin(BaseUserAdmin):
         "is_staff",
         "is_active",
         "is_verified",
-        "date_joined"
+        "date_joined",
     )
 
     list_filter = (
@@ -35,35 +35,26 @@ class UserAdmin(BaseUserAdmin):
         (
             "Permissions",
             {
-                "fields": (
-                    "is_active",
-                    "is_staff",
-                    "is_superuser",
-                    "is_verified",
-                    "groups",
-                    "user_permissions"
-                ),
+                "fields": ("is_active", "is_staff", "is_superuser", "is_verified", "groups", "user_permissions"),
             },
         ),
-        ("Important dates", {"fields": ("last_login", "date_joined")})
+        ("Important dates", {"fields": ("last_login", "date_joined")}),
     )
 
     add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields" : (
-                    "email",
-                    "username",
-                    "phone_number",
-                    "password1",
-                    "password2",
-                    "is_staff",
-                    "is_active",
-                )
-            }
-        )
+        None,
+        {
+            "classes": ("wide",),
+            "fields": (
+                "email",
+                "username",
+                "phone_number",
+                "password1",
+                "password2",
+                "is_staff",
+                "is_active",
+            ),
+        },
     )
 
 
@@ -71,5 +62,8 @@ class UserAdmin(BaseUserAdmin):
 class SocialAccountAdmin(admin.ModelAdmin):
     list_display = ("user", "provider", "provider_user_id", "created_at")
     list_filter = ("provider",)
-    search_fields = ("user__email", "provider_user_id",)
+    search_fields = (
+        "user__email",
+        "provider_user_id",
+    )
     raw_id_fields = ("user",)

@@ -22,21 +22,21 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [  # noqa: F405
 #
 #
 LOGGING = {
-    "version"                 : 1,
+    "version": 1,
     "disable_existing_loggers": False,
-    "handlers"                : {
+    "handlers": {
         "console": {
             "class": "logging.StreamHandler",
         },
     },
-    "loggers"                 : {
+    "loggers": {
         "django.db.backends": {
-            "level"   : "DEBUG",
+            "level": "DEBUG",
             "handlers": ["console"],
         },
-        "apps.accounts"     : {
-            "level"   : "INFO",
+        "apps.accounts": {
+            "level": "INFO",
             "handlers": ["console"],
-        }
+        },
     },
 }

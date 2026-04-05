@@ -1,10 +1,8 @@
-import requests
-
-from django.conf import settings
-
-from pydantic import BaseModel
-
 from typing import Protocol
+
+import requests
+from django.conf import settings
+from pydantic import BaseModel
 
 
 class SocialAuthUser(BaseModel):
@@ -26,6 +24,7 @@ class SocialAuthUser(BaseModel):
       social authentication provider.
     :type provider_user_id: str
     """
+
     email: str
     first_name: str
     last_name: str
@@ -44,6 +43,7 @@ class SocialAuthService(Protocol):
     :ivar token: The authentication token that will be verified.
     :type token: str
     """
+
     @classmethod
     def verify_token(cls, token: str) -> SocialAuthUser: ...
 
@@ -59,6 +59,7 @@ class GoogleAuthService:
     :ivar TOKENINFO_URL: The URL endpoint for Google's token verification service.
     :type TOKENINFO_URL: str
     """
+
     TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
 
     @classmethod
@@ -79,11 +80,7 @@ class GoogleAuthService:
                  name, last name, and the provider user ID from the verified token.
         :rtype: SocialAuthUser
         """
-        response = requests.get(
-            cls.TOKENINFO_URL,
-            params={"id_token": token},
-            timeout=10
-        )
+        response = requests.get(cls.TOKENINFO_URL, params={"id_token": token}, timeout=10)
 
         if response.status_code != 200:
             raise ValueError("Invalid Google token.")
@@ -91,19 +88,19 @@ class GoogleAuthService:
         data = response.json()
 
         if data.get("aud") != settings.GOOGLE_CLIENT_ID:
-            raise ValueError(
-                "Token was not issued for this application."
-            )
+            raise ValueError("Token was not issued for this application.")
 
         if data.get("email_verified") != "true":
             raise ValueError("Google email is not verified.")
 
-        return SocialAuthUser.model_validate({
-            "email"           : data["email"],
-            "first_name"      : data.get("given_name", ""),
-            "last_name"       : data.get("family_name", ""),
-            "provider_user_id": data["sub"],
-        })
+        return SocialAuthUser.model_validate(
+            {
+                "email": data["email"],
+                "first_name": data.get("given_name", ""),
+                "last_name": data.get("family_name", ""),
+                "provider_user_id": data["sub"],
+            }
+        )
 
 
 class FacebookAuthService:
@@ -119,6 +116,7 @@ class FacebookAuthService:
         the access token and retrieve user information.
     :type GRAPH_API_URL: str
     """
+
     GRAPH_API_URL = f"https://graph.facebook.com/{settings.FACEBOOK_GRAPHQL_VERSION}/me"
 
     @classmethod
@@ -138,12 +136,7 @@ class FacebookAuthService:
         :rtype: SocialAuthUser
         """
         response = requests.get(
-            cls.GRAPH_API_URL,
-            params={
-                "fields"      : "id,email,first_name,last_name",
-                "access_token": token
-            },
-            timeout=10
+            cls.GRAPH_API_URL, params={"fields": "id,email,first_name,last_name", "access_token": token}, timeout=10
         )
 
         if response.status_code != 200:
@@ -152,14 +145,13 @@ class FacebookAuthService:
         data = response.json()
 
         if "email" not in data:
-            raise ValueError(
-                "Email not available from Facebook. "
-                "Please grant email permission."
-            )
+            raise ValueError("Email not available from Facebook. Please grant email permission.")
 
-        return SocialAuthUser.model_validate({
-            "email"           : data["email"],
-            "first_name"      : data.get("first_name", ""),
-            "last_name"       : data.get("last_name", ""),
-            "provider_user_id": data["id"],
-        })
+        return SocialAuthUser.model_validate(
+            {
+                "email": data["email"],
+                "first_name": data.get("first_name", ""),
+                "last_name": data.get("last_name", ""),
+                "provider_user_id": data["id"],
+            }
+        )
