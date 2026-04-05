@@ -1,9 +1,8 @@
 import importlib
 import logging
+from typing import Protocol
 
 from django.conf import settings
-
-from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +34,7 @@ class ConsoleSMSBackend:
         :type message: str
         :return: None
         """
-        logger.info(
-            f"\n{'=' * 50}\n"
-            f"SMS to {phone_number}:\n"
-            f"{message}\n"
-            f"{'=' * 50}\n"
-        )
+        logger.info(f"\n{'=' * 50}\nSMS to {phone_number}:\n{message}\n{'=' * 50}\n")
 
 
 class TwilioSMSBackend:

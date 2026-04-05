@@ -51,12 +51,9 @@ def generate_otp(phone_number: str):
     current_rate = redis.get(rate_key)
 
     if current_rate and int(current_rate) >= settings.OTP_RATE_LIMIT:  # type: ignore[assignment]
-        raise ValueError(
-            f"Too many OTP requests. "
-            f"Try again in a few minutes."
-        )
+        raise ValueError("Too many OTP requests. Try again in a few minutes.")
 
-    shift = 10 ** settings.OTP_LENGTH
+    shift = 10**settings.OTP_LENGTH
     upper_threshold = 9 * shift
 
     otp = f"{secrets.randbelow(upper_threshold) + shift}"
@@ -119,9 +116,7 @@ def verify_otp(phone_number: str, otp: str) -> bool:
 
     if attempt_count >= settings.OTP_MAX_ATTEMPTS:
         redis.delete(code_key, attempts_key)
-        raise ValueError(
-            "Too many incorrect attempts. Request a new OTP."
-        )
+        raise ValueError("Too many incorrect attempts. Request a new OTP.")
 
     # verify OTP (constant-time comparison)
     provided_hash = _hash_otp(otp)
@@ -130,9 +125,7 @@ def verify_otp(phone_number: str, otp: str) -> bool:
         # Increment attempt counter
         redis.incr(attempts_key)
         remaining = settings.OTP_MAX_ATTEMPTS - attempt_count - 1
-        raise ValueError(
-            f"Incorrect OTP. {remaining} attempts remaining."
-        )
+        raise ValueError(f"Incorrect OTP. {remaining} attempts remaining.")
 
     # success - clean up
     redis.delete(code_key, attempts_key)

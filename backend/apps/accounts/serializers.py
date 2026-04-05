@@ -1,20 +1,16 @@
 import re
-
 from typing import Any
 
 from django.conf import settings
-
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from pydantic import ValidationError
-
 from rest_framework import serializers
 
-from .models import User, SocialAccount
-from .services import GoogleAuthService, FacebookAuthService, SocialAuthService
-
+from .models import SocialAccount, User
+from .services import FacebookAuthService, GoogleAuthService, SocialAuthService
 from .validators import validate_phone_number
 
 type AttrType = dict[str, Any]
@@ -45,6 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
             modified during serialization/deserialization.
         :type read_only_fields: List[str]
         """
+
         model = User
         fields = [
             "id",
@@ -57,11 +54,7 @@ class UserSerializer(serializers.ModelSerializer):
             "date_joined",
         ]
 
-        read_only_fields = [
-            "id",
-            "is_verified",
-            "date_joined"
-        ]
+        read_only_fields = ["id", "is_verified", "date_joined"]
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -81,6 +74,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                             the `password` field.
     :type password_confirm: serializers.CharField
     """
+
     password = serializers.CharField(
         write_only=True,
         min_length=8,
@@ -109,6 +103,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             ensuring they cannot be modified during deserialization.
         :type read_only_fields: list[str]
         """
+
         model = User
         fields = [
             "id",
@@ -118,7 +113,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password_confirm",
         ]
 
-        read_only_fields = ["id", ]
+        read_only_fields = [
+            "id",
+        ]
 
     def validate_username(self, value: str) -> str:
         """
@@ -136,9 +133,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             pattern of containing only letters, numbers, and underscores.
         """
         if not re.match("^[a-zA-Z0-9_]+$", value):
-            raise serializers.ValidationError(
-                "Username can only contain letters, numbers, and underscores."
-            )
+            raise serializers.ValidationError("Username can only contain letters, numbers, and underscores.")
 
         return value
 
@@ -161,9 +156,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                                               do not match.
         """
         if attrs["password"] != attrs["password_confirm"]:
-            raise serializers.ValidationError({
-                "password_confirm": "Passwords do not match."
-            })
+            raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
 
         return attrs
 
@@ -204,6 +197,7 @@ class VerifyEmailSerializer(serializers.Serializer):
     :ivar token: Verification token generated for the user.
     :type token: str
     """
+
     uid = serializers.CharField()
     token = serializers.CharField()
 
@@ -225,22 +219,16 @@ class VerifyEmailSerializer(serializers.Serializer):
         try:
             user_id = force_str(urlsafe_base64_decode(attrs["uid"]))
             user = User.objects.get(pk=user_id)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            raise serializers.ValidationError(
-                {"uid": "Invalid or expired verification link."}
-            )
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist) as err:
+            raise serializers.ValidationError({"uid": "Invalid or expired verification link."}) from err
 
         # verifying the token
         if not default_token_generator.check_token(user, attrs["token"]):
-            raise serializers.ValidationError(
-                {"token": "Invalid or expired verification link."}
-            )
+            raise serializers.ValidationError({"token": "Invalid or expired verification link."})
 
         # check if the user is already verified or not
         if user.is_verified:
-            raise serializers.ValidationError(
-                "This email has already been verified."
-            )
+            raise serializers.ValidationError("This email has already been verified.")
 
         attrs["user"] = user
         return attrs
@@ -258,6 +246,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     :ivar email: The email address of the user requesting the password reset.
     :type email: serializers.EmailField
     """
+
     email = serializers.EmailField()
 
 
@@ -284,6 +273,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         length requirement.
     :type new_password_confirm: str
     """
+
     uid = serializers.CharField()
     token = serializers.CharField()
     new_password = serializers.CharField(
@@ -318,23 +308,17 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             - The reset token is invalid or expired.
         """
         if attrs["new_password"] != attrs["new_password_confirm"]:
-            raise serializers.ValidationError({
-                "new_password_confirm": "Passwords do not match."
-            })
+            raise serializers.ValidationError({"new_password_confirm": "Passwords do not match."})
 
         try:
             user_id = force_str(urlsafe_base64_decode(attrs["uid"]))
             user = User.objects.get(pk=user_id)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            raise serializers.ValidationError({
-                "uid": "Invalid or expired reset link."
-            })
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist) as err:
+            raise serializers.ValidationError({"uid": "Invalid or expired reset link."}) from err
 
         # verify the token
         if not default_token_generator.check_token(user, attrs["token"]):
-            raise serializers.ValidationError({
-                "token": "Invalid or expired reset link."
-            })
+            raise serializers.ValidationError({"token": "Invalid or expired reset link."})
 
         attrs["user"] = user
         return attrs
@@ -356,6 +340,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         new_password for validation.
     :type new_password_confirm: str
     """
+
     old_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(
         write_only=True,
@@ -382,17 +367,13 @@ class ChangePasswordSerializer(serializers.Serializer):
         """
         user = self.context["request"].user
         if not user.check_password(value):
-            raise serializers.ValidationError(
-                "Current password is incorrect."
-            )
+            raise serializers.ValidationError("Current password is incorrect.")
 
         return value
 
     def validate(self, attrs: AttrType) -> AttrType:
         if attrs["new_password"] != attrs["new_password_confirm"]:
-            raise serializers.ValidationError({
-                "new_password_confirm": "Passwords do not match."
-            })
+            raise serializers.ValidationError({"new_password_confirm": "Passwords do not match."})
 
         return attrs
 
@@ -412,10 +393,9 @@ class SocialAuthSerializer(serializers.Serializer):
         specified in `SocialAccount.Provider`.
     :type provider: str
     """
+
     access_token = serializers.CharField()
-    provider = serializers.ChoiceField(
-        choices=SocialAccount.Provider
-    )
+    provider = serializers.ChoiceField(choices=SocialAccount.Provider)
 
     def validate(self, attrs: AttrType) -> AttrType:
         """
@@ -435,23 +415,19 @@ class SocialAuthSerializer(serializers.Serializer):
 
         # Step 1: verify token with the provider
         provider_services = {
-            SocialAccount.Provider.GOOGLE  : GoogleAuthService,
+            SocialAccount.Provider.GOOGLE: GoogleAuthService,
             SocialAccount.Provider.FACEBOOK: FacebookAuthService,
         }
 
         service: SocialAuthService | None = provider_services.get(provider)
 
         if not service:
-            raise serializers.ValidationError({
-                "provider": f"Unsupported provider: {provider}"
-            })
+            raise serializers.ValidationError({"provider": f"Unsupported provider: {provider}"})
 
         try:
             user_info = service.verify_token(access_token)
         except ValueError as e:
-            raise serializers.ValidationError({
-                "access_token": str(e)
-            })
+            raise serializers.ValidationError({"access_token": str(e)}) from e
 
         attrs["user_info"] = user_info
 
@@ -472,6 +448,7 @@ class SendOTPSerializer(serializers.Serializer):
         7 and 15 characters long and may optionally start with a '+'.
     :type phone_number: str
     """
+
     phone_number = serializers.CharField(max_length=20)
 
     def validate_phone_number(self, value: str) -> str:
@@ -493,7 +470,7 @@ class SendOTPSerializer(serializers.Serializer):
         try:
             return validate_phone_number(value)
         except ValidationError as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e)) from e
 
 
 class VerifyOTPSerializer(serializers.Serializer):
@@ -509,6 +486,7 @@ class VerifyOTPSerializer(serializers.Serializer):
     :ivar otp: The one-time password provided for verification.
     :type otp: str
     """
+
     phone_number = serializers.CharField(max_length=20)
     otp = serializers.CharField(min_length=settings.OTP_LENGTH, max_length=settings.OTP_LENGTH)
 
@@ -531,7 +509,7 @@ class VerifyOTPSerializer(serializers.Serializer):
         try:
             return validate_phone_number(value)
         except ValidationError as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e)) from e
 
     def validate_otp(self, value: str) -> str:
         """
@@ -542,8 +520,6 @@ class VerifyOTPSerializer(serializers.Serializer):
         :raises serializers.ValidationError: If the OTP value contains non-digit characters.
         """
         if not value.isdigit():
-            raise serializers.ValidationError(
-                "OTP must contain only digits."
-            )
+            raise serializers.ValidationError("OTP must contain only digits.")
 
         return value

@@ -6,8 +6,8 @@ class IsVerified(BasePermission):
 
     def has_permission(self, request, view):
         return (
-                request.user
-                and request.user.is_authenticated
-                and hasattr(request.user, "is_verified")
-                and request.user.is_verified
+            request.user
+            and request.user.is_authenticated
+            and hasattr(request.user, "is_verified")
+            and request.user.is_verified
         )

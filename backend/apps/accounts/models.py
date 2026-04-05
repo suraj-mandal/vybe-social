@@ -18,25 +18,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     is commonly used for authentication, user profiles, and data management.
 
     """
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
 
-    email = models.EmailField(
-        verbose_name="email address",
-        max_length=255,
-        unique=True,
-        db_index=True
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    email = models.EmailField(verbose_name="email address", max_length=255, unique=True, db_index=True)
 
     username = models.CharField(
         verbose_name="username",
         max_length=30,
         unique=True,
         db_index=True,
-        help_text="Required. 30 characters or fewer. Letters, digits, and underscores only."
+        help_text="Required. 30 characters or fewer. Letters, digits, and underscores only.",
     )
 
     phone_number = models.CharField(
@@ -54,13 +46,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=True,
     )
 
-    is_staff = models.BooleanField(
-        default=False
-    )
+    is_staff = models.BooleanField(default=False)
 
-    is_verified = models.BooleanField(
-        default=False
-    )
+    is_verified = models.BooleanField(default=False)
 
     date_joined = models.DateTimeField(default=timezone.now)
 
@@ -81,6 +69,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         user-related details, which are used to manage and represent user data. It
         is commonly used for authentication, user profiles, and data management.
         """
+
         verbose_name = "user"
         verbose_name_plural = "users"
         ordering = ["-date_joined"]
@@ -125,6 +114,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 # creating a social account class to handle oauth2 from providers such as google and facebook
 
+
 class SocialAccount(models.Model):
     """
     Represents a social account linked to a user, which is provided by third-party
@@ -161,14 +151,11 @@ class SocialAccount(models.Model):
         :ivar FACEBOOK: Represents the Facebook provider.
         :type FACEBOOK: str
         """
+
         GOOGLE = "google", "Google"
         FACEBOOK = "facebook", "Facebook"
 
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     user = models.ForeignKey(
         User,
@@ -176,15 +163,9 @@ class SocialAccount(models.Model):
         related_name="social_accounts",
     )
 
-    provider = models.CharField(
-        max_length=20,
-        choices=Provider
-    )
+    provider = models.CharField(max_length=20, choices=Provider)
 
-    provider_user_id = models.CharField(
-        max_length=255,
-        help_text="The user's unique ID from the social provider."
-    )
+    provider_user_id = models.CharField(max_length=255, help_text="The user's unique ID from the social provider.")
 
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -206,6 +187,7 @@ class SocialAccount(models.Model):
         :ivar verbose_name_plural: Plural descriptive name for the social account model.
         :type verbose_name_plural: str
         """
+
         constraints = [
             models.UniqueConstraint(
                 fields=["provider", "provider_user_id"],
