@@ -1,22 +1,31 @@
 from typing import Any
 
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .emails import send_verification_email, send_password_reset_email
-from .models import User, SocialAccount
-from .serializers import UserSerializer, RegisterSerializer, VerifyEmailSerializer, PasswordResetRequestSerializer, \
-    PasswordResetConfirmSerializer, ChangePasswordSerializer, SocialAuthSerializer, SendOTPSerializer, \
-    VerifyOTPSerializer, LogoutSerializer
+from .emails import send_password_reset_email, send_verification_email
+from .models import SocialAccount, User
+from .serializers import (
+    ChangePasswordSerializer,
+    LogoutSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    RegisterSerializer,
+    SendOTPSerializer,
+    SocialAuthSerializer,
+    UserSerializer,
+    VerifyEmailSerializer,
+    VerifyOTPSerializer,
+)
 from .services import SocialAuthUser, generate_otp, verify_otp
 from .sms_backends import get_sms_backend
 
-
 # Create your views here.
+
 
 class UserListView(generics.ListAPIView):
     """
@@ -35,6 +44,7 @@ class UserListView(generics.ListAPIView):
     :ivar permission_classes: The list of permissions required to access this view.
     :type permission_classes: list
     """
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -61,6 +71,7 @@ class UserDetailView(generics.RetrieveAPIView):
         whether the requesting user is authorized to access this view.
     :type permission_classes: list
     """
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -82,6 +93,7 @@ class RegisterView(generics.CreateAPIView):
                               restrictions for this view.
     :type permission_classes: list
     """
+
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
@@ -116,11 +128,8 @@ class RegisterView(generics.CreateAPIView):
 
         return Response(
             {
-                "user"  : RegisterSerializer(user).data,
-                "tokens": {
-                    "access" : str(refresh.access_token),
-                    "refresh": str(refresh)
-                }
+                "user": RegisterSerializer(user).data,
+                "tokens": {"access": str(refresh.access_token), "refresh": str(refresh)},
             },
             status=status.HTTP_201_CREATED,
         )
@@ -140,6 +149,7 @@ class VerifyEmailView(generics.GenericAPIView):
     :ivar permission_classes: The list of permission classes required to access this view.
     :type permission_classes: list
     """
+
     serializer_class = VerifyEmailSerializer
     permission_classes = [AllowAny]
 
@@ -186,6 +196,7 @@ class ResendVerificationView(generics.GenericAPIView):
         this view.
     :type permission_classes: list
     """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
@@ -233,6 +244,7 @@ class PasswordResetRequestView(generics.GenericAPIView):
     :ivar permission_classes: List of permission classes applied for this view.
     :type permission_classes: List of permissions
     """
+
     serializer_class = PasswordResetRequestSerializer
     permission_classes = [AllowAny]
 
@@ -264,12 +276,7 @@ class PasswordResetRequestView(generics.GenericAPIView):
             pass
 
         return Response(
-            {
-                "detail": (
-                    "If an account with this email exists, "
-                    "a password reset link has been sent."
-                )
-            },
+            {"detail": ("If an account with this email exists, a password reset link has been sent.")},
             status=status.HTTP_200_OK,
         )
 
@@ -290,6 +297,7 @@ class PasswordResetConfirmView(generics.GenericAPIView):
         this view.
     :type permission_classes: list[type[AllowAny]]
     """
+
     serializer_class = PasswordResetConfirmSerializer
     permission_classes = [AllowAny]
 
@@ -335,6 +343,7 @@ class ChangePasswordView(generics.GenericAPIView):
         view is restricted to authenticated users.
     :type permission_classes: list[type]
     """
+
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
 
@@ -383,6 +392,7 @@ class SocialAuthView(generics.GenericAPIView):
     :ivar permission_classes: Defines the permission classes that control access to this view.
     :type permission_classes: List[AllowAny]
     """
+
     serializer_class = SocialAuthSerializer
     permission_classes = [AllowAny]
 
@@ -415,8 +425,7 @@ class SocialAuthView(generics.GenericAPIView):
         # Step 1: trying to fina an existing social media account
         try:
             social_account = SocialAccount.objects.select_related("user").get(
-                provider=provider,
-                provider_user_id=user_info.provider_user_id
+                provider=provider, provider_user_id=user_info.provider_user_id
             )
             user = social_account.user
 
@@ -426,9 +435,9 @@ class SocialAuthView(generics.GenericAPIView):
             user, created = User.objects.get_or_create(
                 email=user_info.email,
                 defaults={
-                    "username"   : self._generate_username(user_info),
-                    "first_name" : user_info.first_name,
-                    "last_name"  : user_info.last_name,
+                    "username": self._generate_username(user_info),
+                    "first_name": user_info.first_name,
+                    "last_name": user_info.last_name,
                     "is_verified": True,  # already verified by Google / facebook
                 },
             )
@@ -449,11 +458,8 @@ class SocialAuthView(generics.GenericAPIView):
 
         return Response(
             {
-                "user"  : UserSerializer(user).data,
-                "tokens": {
-                    "access" : str(refresh.access_token),
-                    "refresh": str(refresh)
-                }
+                "user": UserSerializer(user).data,
+                "tokens": {"access": str(refresh.access_token), "refresh": str(refresh)},
             }
         )
 
@@ -476,6 +482,7 @@ class SocialAuthView(generics.GenericAPIView):
         base = user_info.email.split("@")[0]
 
         import re
+
         base = re.sub(r"[^a-zA-Z0-9_]", "_", base).lower()
 
         base = base[:25]
@@ -504,6 +511,7 @@ class SendOTPView(generics.GenericAPIView):
     :ivar permission_classes: The permission classes that determine access to this view.
     :type permission_classes: list[type]
     """
+
     serializer_class = SendOTPSerializer
     permission_classes = [AllowAny]
 
@@ -539,8 +547,7 @@ class SendOTPView(generics.GenericAPIView):
         sms_backend = get_sms_backend()
         sms_backend.send(
             phone_number=phone_number,
-            message=f"Your Vybe verification code is: {otp}. "
-                    f"It expires in 5 minutes.",
+            message=f"Your Vybe verification code is: {otp}. It expires in 5 minutes.",
         )
 
         return Response(
@@ -573,8 +580,8 @@ class VerifyOTPView(generics.GenericAPIView):
         user, created = User.objects.get_or_create(
             phone_number=phone_number,
             defaults={
-                "email"      : f"{phone_number}@phone.vybe.local",
-                "username"   : self._generate_phone_username(phone_number),
+                "email": f"{phone_number}@phone.vybe.local",
+                "username": self._generate_phone_username(phone_number),
                 "is_verified": True,  # phone is verified by proving they recieve otp
             },
         )
@@ -582,7 +589,11 @@ class VerifyOTPView(generics.GenericAPIView):
         if created:
             # the user is new, so they should not have any password
             user.set_unusable_password()
-            user.save(update_fields=["password", ])
+            user.save(
+                update_fields=[
+                    "password",
+                ]
+            )
 
         # generating the JWT tokens for the newly created user
         refresh = RefreshToken.for_user(user)
@@ -590,11 +601,11 @@ class VerifyOTPView(generics.GenericAPIView):
         # returning the response
         return Response(
             {
-                "user"  : UserSerializer(user).data,
+                "user": UserSerializer(user).data,
                 "tokens": {
-                    "access" : str(refresh.access_token),
+                    "access": str(refresh.access_token),
                     "refresh": str(refresh),
-                }
+                },
             },
             status=status.HTTP_200_OK,
         )
@@ -637,7 +648,7 @@ class LogoutFromAllDevicesView(generics.GenericAPIView):
     def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
         tokens = OutstandingToken.objects.filter(
             user=request.user,
-            blacklistedtoken__isnull=True  # tokens that are not blacklisted yet
+            blacklistedtoken__isnull=True,  # tokens that are not blacklisted yet
         )
 
         # creating all the blacklist versions of active refresh tokens for the user
@@ -649,9 +660,6 @@ class LogoutFromAllDevicesView(generics.GenericAPIView):
         # using len(tokens) here will trigger a DB query again.
 
         return Response(
-            {
-                "detail": f"Logged out from all devices. "
-                          f"{len(created_blacklisted_tokens)} sessions terminated."
-            },
+            {"detail": f"Logged out from all devices. {len(created_blacklisted_tokens)} sessions terminated."},
             status=status.HTTP_200_OK,
         )

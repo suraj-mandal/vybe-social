@@ -16,9 +16,8 @@ class CustomUserManager(BaseUserManager):
     :ivar _db: The database connection to be used for saving user instances.
     :type _db: Any
     """
-    def create_user(
-            self, email: str | None, password: str | None = None, **extra_fields: Any
-    ) -> AbstractBaseUser:
+
+    def create_user(self, email: str | None, password: str | None = None, **extra_fields: Any) -> AbstractBaseUser:
         """
         Creates and saves a new user with the given email, password, and additional fields.
 
@@ -45,9 +44,7 @@ class CustomUserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(
-            self, email: str | None, password: str | None = None, **extra_fields: Any
-    ) -> AbstractBaseUser:
+    def create_superuser(self, email: str | None, password: str | None = None, **extra_fields: Any) -> AbstractBaseUser:
         """
         Creates and returns a superuser with the given email, password, and additional
         fields. The `is_staff`, `is_superuser`, and `is_active` fields are set to True

@@ -1,0 +1,49 @@
+[tool.ruff]
+# Target python version 13
+target-version = "py313"
+
+# backend check
+src = ["backend"]
+
+line-length = 120
+
+exclude = [
+    "*/migrations/*",
+    ".git",
+    "__pycache__",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+]
+
+[tool.ruff.lint]
+
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "DJ"]
+
+ignore = [
+    "E501",
+    "DJ001"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/config/settings/*.py" = ["F403", "F405"]
+
+[tool.ruff.lint.isort]
+
+known-first-party = ["apps", "config"]
+
+[tool.ruff.format]
+# Use double quotes
+quote-style = "double"
+
+skip-magic-trailing-comma = false
+
+[tool.pytest.ini_options]
+# where to find Django settings
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+
+testpaths = ["backend"]
+
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+
+addopts = "-v --tb=short"
