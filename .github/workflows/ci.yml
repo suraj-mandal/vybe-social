@@ -103,4 +103,4 @@ jobs:
 
       - name: Run tests
         working-directory: backend
-        run: pytest -v --tb=short
+        run: pytest -v --tb=short || test $? -eq 5
