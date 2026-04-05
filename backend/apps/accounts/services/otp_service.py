@@ -53,7 +53,7 @@ def generate_otp(phone_number: str):
     if current_rate and int(current_rate) >= settings.OTP_RATE_LIMIT:  # type: ignore[assignment]
         raise ValueError("Too many OTP requests. Try again in a few minutes.")
 
-    shift = 10**settings.OTP_LENGTH
+    shift = 10 ** (settings.OTP_LENGTH - 1)
     upper_threshold = 9 * shift
 
     otp = f"{secrets.randbelow(upper_threshold) + shift}"

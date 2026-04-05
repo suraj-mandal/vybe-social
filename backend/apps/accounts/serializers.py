@@ -10,6 +10,8 @@ from pydantic import ValidationError
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
+from apps.profiles.serializers import ProfileSerializer
+
 from .models import SocialAccount, User
 from .services import FacebookAuthService, GoogleAuthService, SocialAuthService
 from .validators import validate_phone_number
@@ -26,6 +28,8 @@ class UserSerializer(serializers.ModelSerializer):
     complex data types such as Django models into native Python datatypes
     (serialization) or vice versa (deserialization).
     """
+
+    profile = ProfileSerializer(read_only=True)
 
     class Meta:
         """
@@ -53,6 +57,7 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "is_verified",
             "date_joined",
+            "profile",
         ]
 
         read_only_fields = ["id", "is_verified", "date_joined"]

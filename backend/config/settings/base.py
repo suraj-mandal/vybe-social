@@ -50,7 +50,10 @@ THIRD_PARTY_APPS = [
     "rest_framework_simplejwt.token_blacklist",
 ]
 
-LOCAL_APPS = ["apps.accounts"]
+LOCAL_APPS = [
+    "apps.accounts",
+    "apps.profiles",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
