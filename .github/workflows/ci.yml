@@ -64,6 +64,19 @@ jobs:
           --health-timeout=5s
           --health-retries=5
 
+      minio:
+        image: minio/minio:latest
+        env:
+          MINIO_ROOT_USER: vybe_minio_admin
+          MINIO_ROOT_PASSWORD: vybe_minio_secret
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd="curl -f http://localhost:9000/minio/health/live || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     env:
       DJANGO_SETTINGS_MODULE: config.settings.dev
       POSTGRES_DB: vybe_test
@@ -73,6 +86,12 @@ jobs:
       REDIS_URL: redis://localhost:6379/0
       DJANGO_SECRET_KEY: test_mRbwzLYDDwQtfZQWDiswHrvr9g_dTSzRvUtD0rRqj_dgGJa93EMR0LzSh0AGV1jRX8I
       DEBUG: "True"
+      AWS_ACCESS_KEY_ID: vybe_minio_admin
+      AWS_SECRET_ACCESS_KEY: vybe_minio_secret
+      AWS_STORAGE_BUCKET_NAME: vybe-media
+      AWS_S3_REGION_NAME: us-east-1
+      AWS_S3_ENDPOINT_URL: http://minio:9000
+      AWS_S3_EXTERNAL_URL: http://localhost:9000
 
     steps:
       - name: Checkout code
@@ -100,6 +119,13 @@ jobs:
       - name: Run migrations
         working-directory: backend
         run: python manage.py migrate --noinput
+
+      - name: Create S3 bucket in MinIO
+        run: |
+          pip install boto3
+          python scripts/create_bucket.py
+        env:
+          PYTHONPATH: backend
 
       - name: Run tests
         working-directory: backend

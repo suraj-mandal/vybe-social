@@ -53,6 +53,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.accounts",
     "apps.profiles",
+    "apps.media",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -137,6 +138,30 @@ OTP_EXPIRY_SECONDS = 300
 OTP_MAX_ATTEMPTS = 5
 OTP_RATE_LIMIT = 3  # max otp per phone per window
 OTP_RATE_LIMIT_WINDOW = 600  # 10 min rate limit window
+
+# AWS-related settings
+AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID", default="")
+AWS_SECRET_ACCESS_KEY = env.str("AWS_SECRET_ACCESS_KEY", default="")
+AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME", default="vybe-media")
+AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL", default="")
+AWS_S3_EXTERNAL_URL = env.str("AWS_S3_EXTERNAL_URL", default="")
+AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME", default="ap-south-1")
+AWS_PRESIGNED_URL_EXPIRY = env.int("AWS_PRESIGNED_URL_EXPIRY", default=3600)
+
+# Media upload limits
+MEDIA_MAX_IMAGE_SIZE = 10 * 1024 * 1024
+MEDIA_MAX_VIDEO_SIZE = 100 * 1024 * 1024
+MEDIA_ALLOWED_IMAGE_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+]
+MEDIA_ALLOWED_VIDEO_TYPES = [
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
