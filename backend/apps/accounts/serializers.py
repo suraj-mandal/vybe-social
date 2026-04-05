@@ -8,6 +8,7 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from pydantic import ValidationError
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from .models import SocialAccount, User
 from .services import FacebookAuthService, GoogleAuthService, SocialAuthService
@@ -523,3 +524,16 @@ class VerifyOTPSerializer(serializers.Serializer):
             raise serializers.ValidationError("OTP must contain only digits.")
 
         return value
+
+
+# serializer for logout
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    def validate_refresh(self, value: str) -> RefreshToken:
+        try:
+            token = RefreshToken(value)  # type: ignore[arg-type]
+        except TokenError as e:
+            raise serializers.ValidationError(str(e)) from e
+
+        return token
