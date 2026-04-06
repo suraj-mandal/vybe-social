@@ -71,6 +71,7 @@ jobs:
         env:
           MINIO_ROOT_USER: admin
           MINIO_ROOT_PASSWORD: password
+
         options: >-
           --name=minio
           --health-cmd "curl -f http://localhost:9000/minio/health/live"
@@ -80,6 +81,7 @@ jobs:
 
     env:
       DJANGO_SETTINGS_MODULE: config.settings.dev
+      PYTHONPATH: backend
       POSTGRES_DB: vybe_test
       POSTGRES_USER: vybe_user
       POSTGRES_PASSWORD: vybe_test_password
@@ -118,6 +120,7 @@ jobs:
           pip install -r backend/requirements-dev.txt
 
       - name: Run migrations
+        env:
         working-directory: backend
         run: python manage.py migrate --noinput
 
