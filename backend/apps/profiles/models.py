@@ -46,11 +46,7 @@ class Profile(models.Model):
 
     bio = models.TextField(max_length=500, blank=True)
 
-    avatar_url = models.URLField(
-        max_length=500,
-        blank=True,
-        help_text="S3 presigned URL will be generated from the S3 key.",
-    )
+    avatar = models.ForeignKey("media.Media", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
 
     location = models.CharField(max_length=100, blank=True)
 
