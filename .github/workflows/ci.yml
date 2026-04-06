@@ -65,19 +65,20 @@ jobs:
           --health-retries=5
 
       minio:
-        image: minio/minio
+        image: lazybit/minio
         ports:
           - 9000:9000
         env:
           MINIO_ROOT_USER: admin
           MINIO_ROOT_PASSWORD: password
+        volumes:
+          - ${{ github.workspace }}/data:/data
         options: >-
+          --name=minio
           --health-cmd "curl -f http://localhost:9000/minio/health/live"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        # The command must include 'server /data' to start the MinIO server
-        args: server /data
 
     env:
       DJANGO_SETTINGS_MODULE: config.settings.dev
