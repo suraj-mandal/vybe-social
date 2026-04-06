@@ -69,8 +69,9 @@ jobs:
         ports:
           - 9000:9000
         env:
-          MINIO_ROOT_USER: admin
-          MINIO_ROOT_PASSWORD: password
+          MINIO_ROOT_USER: vybe_minio_admin
+          MINIO_ROOT_PASSWORD: vybe_minio_secret
+
 
         options: >-
           --name=minio
@@ -132,7 +133,7 @@ jobs:
 
       - name: Run tests with coverage
         working-directory: backend
-        run:  pytest --cov=apps --cov-report=term-missing --cov-report=xml:coverage.xml
+        run: pytest --cov=apps --cov-report=term-missing --cov-report=xml:coverage.xml
 
 
       - name: Upload coverage to Codecov
