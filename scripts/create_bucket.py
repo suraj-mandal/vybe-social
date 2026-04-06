@@ -6,7 +6,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 # These must match your MinIO .env values
-ENDPOINT_URL = "http://minio:9000"
+ENDPOINT_URL = "http://localhost:9000"
 ACCESS_KEY = "vybe_minio_admin"
 SECRET_KEY = "vybe_minio_secret"
 BUCKET_NAME = "vybe-media"
