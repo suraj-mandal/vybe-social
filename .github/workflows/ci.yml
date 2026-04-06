@@ -76,6 +76,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+          --entrypoint "minio server /data"
 
     env:
       DJANGO_SETTINGS_MODULE: config.settings.dev
@@ -130,6 +131,7 @@ jobs:
       - name: Run tests with coverage
         working-directory: backend
         run:  pytest --cov=apps --cov-report=term-missing --cov-report=xml:coverage.xml
+
 
       - name: Upload coverage to Codecov
         if: always()
