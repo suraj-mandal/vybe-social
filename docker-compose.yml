@@ -8,13 +8,6 @@ services:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
     container_name: vybe-backend
-    command: >
-      sh -c "python manage.py migrate &&
-              python manage.py runserver 0.0.0.0:8000"
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
     env_file:
       - .env
     depends_on:
@@ -32,8 +25,6 @@ services:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     restart: unless-stopped
     networks:
       - vybe-network
@@ -41,8 +32,6 @@ services:
   redis:
     image: redis:7.4.8-alpine
     container_name: vybe-redis
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -54,31 +43,11 @@ services:
     container_name: vybe-mongodb
     env_file:
       - .env
-    ports:
-      - "27017:27017"
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
     networks:
       - vybe-network
-
-  minio:
-    image: minio/minio:latest
-    container_name: vybe-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vybe_minio_admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-vybe_minio_secret}
-    ports:
-      - "9000:9000" # S3 API
-      - "9001:9001" # MinIO web console
-    volumes:
-      - minio_data:/data
-    restart: unless-stopped
-    networks:
-      - vybe-network
-    profiles:
-      - testing   # will start when docker compose profile testing is run
 
 
 # creating named volumes here
@@ -88,7 +57,6 @@ volumes:
   postgres_data:
   redis_data:
   mongo_data:
-  minio_data:
 
 # --- Network ---
 # A custom bridge network. All the services are on the same network
