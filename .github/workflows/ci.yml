@@ -65,7 +65,7 @@ jobs:
           --health-retries=5
 
       minio:
-        image: minio/minio:latest
+        image: bitnami/minio:latest
         env:
           MINIO_ROOT_USER: vybe_minio_admin
           MINIO_ROOT_PASSWORD: vybe_minio_secret
@@ -76,7 +76,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          --entrypoint "minio server /data"
 
     env:
       DJANGO_SETTINGS_MODULE: config.settings.dev
