@@ -120,7 +120,6 @@ jobs:
           pip install -r backend/requirements-dev.txt
 
       - name: Run migrations
-        env:
         working-directory: backend
         run: python manage.py migrate --noinput
 
