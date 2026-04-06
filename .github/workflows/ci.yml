@@ -81,7 +81,7 @@ jobs:
 
     env:
       DJANGO_SETTINGS_MODULE: config.settings.dev
-      PYTHONPATH: backend
+      PYTHONPATH: ${{ github.workspace }}/backend
       POSTGRES_DB: vybe_test
       POSTGRES_USER: vybe_user
       POSTGRES_PASSWORD: vybe_test_password
