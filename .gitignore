@@ -15,7 +15,7 @@ guides/
 # Django
 *.sqlite3
 db.sqlite3
-media/
+/media/
 staticfiles/
 
 # IDE
@@ -31,3 +31,7 @@ staticfiles/
 # OS
 .DS_Store
 Thumbs.db
+
+coverage.xml
+htmlcov/
+.coverage

@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      args:
+        DEV: 1
+    command: >
+      sh -c "python manage.py migrate &&
+            python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app    # live code reloading
+    ports:
+      - "8000:8000"
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  mongodb:
+    ports:
+      - "27017:27017"
+
+  minio:
+    image: minio/minio:latest
+    container_name: vybe-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vybe_minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-vybe_minio_secret}
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # MinIO web console
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    networks:
+      - vybe-network
+    profiles:
+      - testing   # start with --profile testing
+
+volumes:
+  minio_data:

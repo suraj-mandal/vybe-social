@@ -23,4 +23,5 @@ urlpatterns = [
     path("api/accounts/", include("apps.accounts.urls")),
     path("api/auth/", include("apps.accounts.auth_urls")),
     path("api/profiles/", include("apps.profiles.urls")),
+    path("api/media/", include("apps.media.urls")),
 ]

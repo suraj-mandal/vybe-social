@@ -16,8 +16,12 @@ RUN apt-get update \
 
 # copying the requirements.txt file first \
 COPY requirements.txt .
+COPY requirements-dev.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
+
+ARG DEV=0
+RUN if [ "$DEV" = "1" ]; then pip install --no-cache-dir -r requirements-dev.txt; fi
 
 # create a non-root user
 ARG UID=1000
