@@ -1,1 +1,1 @@
-[![codecov](https://codecov.io/gh/suraj-mandal/vybe-social/branch/main/graph/badge.svg)](https://codecov.io/gh/suraj-mandal/vybe-social)
+[![codecov](https://codecov.io/github/suraj-mandal/vybe-social/graph/badge.svg?token=GF3QIAT6NG)](https://codecov.io/github/suraj-mandal/vybe-social)[![codecov](https://codecov.io/gh/suraj-mandal/vybe-social/branch/main/graph/badge.svg)](https://codecov.io/gh/suraj-mandal/vybe-social)
