@@ -114,7 +114,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r backend/requirements.txt
-          pip install pytest pytest-django
+          pip install -r backend/requirements-dev.txt
 
       - name: Run migrations
         working-directory: backend
@@ -127,6 +127,15 @@ jobs:
         env:
           PYTHONPATH: backend
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: backend
-        run: pytest -v --tb=short || test $? -eq 5
+        run: pytest
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: backend/coverage.xml
+          fail_ci_if_error: false
+          flags: unittests

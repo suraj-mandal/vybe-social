@@ -31,3 +31,7 @@ staticfiles/
 # OS
 .DS_Store
 Thumbs.db
+
+coverage.xml
+htmlcov/
+.coverage

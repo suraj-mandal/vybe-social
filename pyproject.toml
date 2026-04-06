@@ -38,12 +38,34 @@ quote-style = "double"
 
 skip-magic-trailing-comma = false
 
+[tool.coverage.run]
+
+source = ["backend/apps"]
+
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/__init__.py",
+    "*/admin.py",
+]
+
 [tool.pytest.ini_options]
-# where to find Django settings
 DJANGO_SETTINGS_MODULE = "config.settings.dev"
-
 testpaths = ["backend"]
-
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --cov=apps --cov-report=term-missing --cov-report=xml:coverage.xml"
+
+[tool.coverage.report]
+
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "def __repr__",
+    "def __str__",
+]
+
+# fail CI if coverage drops below threshold
+# fail_under = 80
+
+show_missing = true
