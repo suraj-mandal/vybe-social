@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.db.models.functions import Greatest, Least
 
 from apps.accounts.models import User
 
@@ -40,7 +41,9 @@ class FriendRequest(models.Model):
         ordering = ["-created_at"]
 
         constraints = [
-            models.UniqueConstraint(fields=["sender", "receiver"], name="unique_friend_request"),
+            models.UniqueConstraint(
+                Least("sender", "receiver"), Greatest("sender", "receiver"), name="unique_friend_pair"
+            ),
             models.CheckConstraint(
                 condition=~models.Q(sender=models.F("receiver")),
                 name="prevent_self_friend_request",

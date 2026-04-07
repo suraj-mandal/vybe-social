@@ -71,7 +71,7 @@ class FriendRequestManager(models.Manager):
         return self.filter(
             receiver=user,
             status="pending",
-        ).select_related("sender", "sender__profile")
+        ).select_related("sender__profile")
 
     def pending_sent(self, user: User):
         """
@@ -89,4 +89,4 @@ class FriendRequestManager(models.Manager):
         return self.filter(
             sender=user,
             status="pending",
-        ).select_related("receiver", "receiver__profile")
+        ).select_related("receiver__profile")
