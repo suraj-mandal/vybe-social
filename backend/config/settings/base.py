@@ -54,6 +54,7 @@ LOCAL_APPS = [
     "apps.accounts",
     "apps.profiles",
     "apps.media",
+    "apps.friendships",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -173,6 +174,9 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 
 USE_TZ = True
+
+# Friendship cooldown time
+FRIEND_REQUEST_COOLDOWN_DAYS = 20  # days before a sender can re-send after being declined
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
