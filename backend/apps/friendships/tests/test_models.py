@@ -153,7 +153,7 @@ class TestFriendRequestManager(TestCase):
         assert friend_ids == {self.bob.id, self.charlie.id}
         assert self.dave.id not in friend_ids
 
-    def friends_of_returns_empty_for_no_friends(self):
+    def test_friends_of_returns_empty_for_no_friends(self):
         friends: QuerySet = FriendRequest.objects.friends_of(self.alice)
         assert friends.count() == 0
 

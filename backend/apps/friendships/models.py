@@ -1,12 +1,12 @@
 import uuid
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.db.models.functions import Greatest, Least
+from django.utils import timezone
 
 from apps.accounts.models import User
-
-from .managers import FriendRequestManager
+from apps.friendships.managers import FriendRequestManager
 
 
 class FriendRequest(models.Model):
@@ -70,3 +70,28 @@ def are_friends(first_user: User, second_user: User) -> bool:
     :rtype: bool
     """
     return FriendRequest.objects.are_friends(first_user, second_user)
+
+
+def update_friend_request_to_pending(
+    existing_friend_request: FriendRequest, sender: User, receiver: User, message: str
+) -> FriendRequest:
+    with transaction.atomic():
+        existing_friend_request.sender = sender
+        existing_friend_request.receiver = receiver
+        existing_friend_request.message = message
+        existing_friend_request.status = FriendRequest.Status.PENDING
+        existing_friend_request.responded_at = None
+        existing_friend_request.save()
+
+        return existing_friend_request
+
+
+def update_friend_request_from_pending(
+    existing_friend_request: FriendRequest, status: FriendRequest.Status
+) -> FriendRequest:
+    with transaction.atomic():
+        existing_friend_request.status = status
+        existing_friend_request.responded_at = timezone.now()
+        existing_friend_request.save()
+
+        return existing_friend_request
