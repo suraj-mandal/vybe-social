@@ -456,14 +456,14 @@ class TestFriendsListView(TestCase):
         response = self.client.get("/api/friends/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
-        assert response.data[0]["username"] == "bob"
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["username"] == "bob"
 
     def test_returns_empty_list_when_no_friends(self):
         response = self.client.get("/api/friends/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 0
+        assert response.data["count"] == 0
 
     def test_includes_friends_from_both_directions(self):
         FriendRequest.objects.create(
@@ -481,8 +481,8 @@ class TestFriendsListView(TestCase):
         response = self.client.get("/api/friends/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 2
-        usernames = {f["username"] for f in response.data}
+        assert response.data["count"] == 2
+        usernames = {f["username"] for f in response.data["results"]}
         assert usernames == {"bob", "charlie"}
 
     def test_requires_authentication(self):
@@ -518,7 +518,7 @@ class TestPendingReceivedRequestsView(TestCase):
         response = self.client.get("/api/friends/requests/pending/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 2
+        assert response.data["count"] == 2
 
     def test_excludes_sent_requests(self):
         FriendRequest.objects.create(sender=self.alice, receiver=self.bob)
@@ -526,7 +526,7 @@ class TestPendingReceivedRequestsView(TestCase):
         response = self.client.get("/api/friends/requests/pending/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 0
+        assert response.data["count"] == 0
 
     def test_excludes_accepted_requests(self):
         FriendRequest.objects.create(
@@ -538,7 +538,7 @@ class TestPendingReceivedRequestsView(TestCase):
         response = self.client.get("/api/friends/requests/pending/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 0
+        assert response.data["count"] == 0
 
 
 class TestPendingSentRequestsView(TestCase):
@@ -562,8 +562,8 @@ class TestPendingSentRequestsView(TestCase):
         response = self.client.get("/api/friends/requests/sent/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
-        assert response.data[0]["receiver"]["username"] == "bob"
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["receiver"]["username"] == "bob"
 
     def test_excludes_received_requests(self):
         FriendRequest.objects.create(sender=self.bob, receiver=self.alice)
@@ -571,7 +571,7 @@ class TestPendingSentRequestsView(TestCase):
         response = self.client.get("/api/friends/requests/sent/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 0
+        assert response.data["count"] == 0
 
     def test_excludes_accepted_requests(self):
         FriendRequest.objects.create(
@@ -583,4 +583,4 @@ class TestPendingSentRequestsView(TestCase):
         response = self.client.get("/api/friends/requests/sent/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 0
+        assert response.data["count"] == 0

@@ -1,6 +1,4 @@
-from collections.abc import Iterable
 from datetime import timedelta
-from typing import Any
 
 from django.conf import settings as django_settings
 from django.db.models import Q
@@ -11,7 +9,6 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
 from apps.accounts.models import User
@@ -378,26 +375,19 @@ class FriendsListView(ListAPIView):
     """
 
     permission_classes = [IsAuthenticated]
+    serializer_class = FriendSummarySerializer
 
-    def get(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    # implements pagination by default
+    def get_queryset(self):
         """
-        Handles GET requests to retrieve a list of friends for the authenticated user.
+        Retrieves and returns the queryset representing friends of the current user. This is a
+        filtering operation tailored to fetch only those FriendRequest objects that denote
+        friendship associations of the authenticated user.
 
-        This method fetches all friends for the user associated with the request and
-        serializes the data to return it as a response.
-
-        :param request: The incoming HTTP request containing the authenticated user.
-        :type request: Request
-        :param args: Additional positional arguments.
-        :type args: list[Any]
-        :param kwargs: Additional keyword arguments.
-        :type kwargs: dict[str, Any]
-        :return: A response containing the serialized list of friends with HTTP 200 status.
-        :rtype: Response
+        :return: A queryset of FriendRequest objects representing the user's friends
+        :rtype: QuerySet
         """
-        friends: Iterable[User] = FriendRequest.objects.friends_of(request.user)
-        serializer = FriendSummarySerializer(friends, many=True)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+        return FriendRequest.objects.friends_of(self.request.user)
 
 
 # get the list of pending received requests
@@ -408,31 +398,22 @@ class PendingReceivedRequestsView(ListAPIView):
     This view provides a GET functionality to retrieve all pending friend requests
     received by the user. It ensures that the user making the request is authenticated,
     and utilizes a serializer to process the pending friend requests data.
-
     """
 
     permission_classes = [IsAuthenticated]
+    serializer_class = FriendRequestSerializer
 
-    def get(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    # implements pagination here by default
+    def get_queryset(self):
         """
-        Handles GET requests to retrieve a list of pending friend requests received by the user.
+        Returns the queryset of pending friend requests received by the
+        currently authenticated user.
 
-        This method fetches all pending friend requests received by the current user, serializes
-        the data using the FriendRequestSerializer, and returns the serialized data in the response.
-
-        :param request: The HTTP request instance.
-        :type request: Request
-        :param args: Additional positional arguments passed to the method.
-        :type args: list[Any]
-        :param kwargs: Additional keyword arguments passed to the method.
-        :type kwargs: dict[str, Any]
-        :return: An HTTP response containing serialized data of pending friend requests and the
-                 HTTP status code 200 (OK).
-        :rtype: Response
+        :return: A queryset containing `FriendRequest` objects filtered by
+            pending requests received by the current user.
+        :rtype: QuerySet
         """
-        pending_received_requests: Iterable[FriendRequest] = FriendRequest.objects.pending_received(request.user)
-        serializer = FriendRequestSerializer(pending_received_requests, many=True)
-        return Response(data=serializer.data, status=HTTP_200_OK)
+        return FriendRequest.objects.pending_received(self.request.user)
 
 
 # get the list of pending ent requests
@@ -449,27 +430,19 @@ class PendingSentRequestsView(ListAPIView):
     """
 
     permission_classes = [IsAuthenticated]
+    serializer_class = FriendRequestSerializer
 
-    def get(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    # implements pagination here by default
+    def get_queryset(self):
         """
-        Handles the retrieval of pending friend requests that have been sent by the
-        current authenticated user.
+        Retrieves the queryset of pending friend requests sent by the current user.
 
-        Retrieves all friend requests marked as "pending" that have been initiated by
-        the requesting user. The retrieved data is serialized and returned as part of
-        the HTTP response. The method uses pagination and serialization to structure
-        the response appropriately.
+        This method is designed to return a QuerySet containing all friend requests
+        that are in a pending state and were sent by the user making the current
+        request. It utilizes the `pending_sent` method of the `FriendRequest.objects`
+        manager to filter the data specific to the requesting user.
 
-        :param request: The HTTP request object initialized by the client.
-        :type request: Request
-        :param args: Additional positional arguments for the method.
-        :type args: list[Any]
-        :param kwargs: Additional keyword arguments for the method.
-        :type kwargs: dict[str, Any]
-        :return: A Response object containing serialized data for pending friend
-            requests and an HTTP 200 status.
-        :rtype: Response
+        :return: A QuerySet of pending friend requests sent by the current user.
+        :rtype: QuerySet
         """
-        pending_sent_requests: Iterable[FriendRequest] = FriendRequest.objects.pending_sent(request.user)
-        serializer = FriendRequestSerializer(pending_sent_requests, many=True)
-        return Response(data=serializer.data, status=HTTP_200_OK)
+        return FriendRequest.objects.pending_sent(self.request.user)
