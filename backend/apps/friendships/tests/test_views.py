@@ -416,7 +416,7 @@ class TestUnfriendView(TestCase):
 
     def test_returns_404_for_nonexistent_request(self):
         fake_id = uuid.uuid4()
-        response = self.client.delete(f"/api/friends/cancel/{fake_id}/")
+        response = self.client.delete(f"/api/friends/{fake_id}/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
