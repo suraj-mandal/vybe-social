@@ -156,4 +156,6 @@ class BlockedUsersListView(ListAPIView):
                   by the requesting user.
         :rtype: set[BlockedUserSerializer]
         """
-        return Block.objects.filter(blocker=self.request.user).select_related("blocked")
+        return Block.objects.filter(blocker=self.request.user).select_related(
+            "blocked"
+        )

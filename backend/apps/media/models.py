@@ -81,7 +81,10 @@ class Media(models.Model):
         :type FAILED: str
         """
 
-        PENDING = "pending", "Pending"  # presigned-url generated, upload not done
+        PENDING = (
+            "pending",
+            "Pending",
+        )  # presigned-url generated, upload not done
         COMPLETED = "completed", "Completed"  # upload completed
         FAILED = "failed", "Failed"  # upload failed
 
@@ -93,13 +96,25 @@ class Media(models.Model):
         related_name="media_files",
     )
 
-    s3_key = models.CharField(max_length=500, unique=True, help_text="The S3 object key (path within the bucket).")
+    s3_key = models.CharField(
+        max_length=500,
+        unique=True,
+        help_text="The S3 object key (path within the bucket).",
+    )
 
     media_type = models.CharField(max_length=10, choices=MediaType)
-    content_type = models.CharField(max_length=100, help_text="MIME type, e.g., image/jpeg")
-    file_name = models.CharField(max_length=255, help_text="Original filename from the client")
-    file_size = models.PositiveBigIntegerField(help_text="File size in bytes.", null=True, blank=True)
-    upload_status = models.CharField(max_length=10, choices=UploadStatus, default=UploadStatus.PENDING)
+    content_type = models.CharField(
+        max_length=100, help_text="MIME type, e.g., image/jpeg"
+    )
+    file_name = models.CharField(
+        max_length=255, help_text="Original filename from the client"
+    )
+    file_size = models.PositiveBigIntegerField(
+        help_text="File size in bytes.", null=True, blank=True
+    )
+    upload_status = models.CharField(
+        max_length=10, choices=UploadStatus, default=UploadStatus.PENDING
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

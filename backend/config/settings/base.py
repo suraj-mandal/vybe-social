@@ -129,7 +129,9 @@ FACEBOOK_APP_SECRET = env.str("FACEBOOK_APP_SECRET", default="")
 FACEBOOK_GRAPHQL_VERSION = env.str("FACEBOOK_GRAPHQL_VERSION", default="")
 
 # Email settings
-DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="noreply@vybe.social")
+DEFAULT_FROM_EMAIL = env.str(
+    "DEFAULT_FROM_EMAIL", default="noreply@vybe.social"
+)
 
 # Frontend URL
 FRONTEND_URL = env.str("FRONTEND_URL", default="http://0.0.0.0:3000")
@@ -144,7 +146,9 @@ OTP_RATE_LIMIT_WINDOW = 600  # 10 min rate limit window
 # AWS-related settings
 AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID", default="")
 AWS_SECRET_ACCESS_KEY = env.str("AWS_SECRET_ACCESS_KEY", default="")
-AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME", default="vybe-media")
+AWS_STORAGE_BUCKET_NAME = env.str(
+    "AWS_STORAGE_BUCKET_NAME", default="vybe-media"
+)
 AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL", default="")
 AWS_S3_EXTERNAL_URL = env.str("AWS_S3_EXTERNAL_URL", default="")
 AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME", default="ap-south-1")
@@ -177,7 +181,9 @@ USE_I18N = True
 USE_TZ = True
 
 # Friendship cooldown time
-FRIEND_REQUEST_COOLDOWN_DAYS = 20  # days before a sender can re-send after being declined
+FRIEND_REQUEST_COOLDOWN_DAYS = (
+    20  # days before a sender can re-send after being declined
+)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
@@ -206,7 +212,9 @@ SMS_BACKEND = env.str(
 
 # Django REST Framework configs
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated"
+    ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",

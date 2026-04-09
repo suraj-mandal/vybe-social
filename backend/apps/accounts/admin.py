@@ -25,17 +25,33 @@ class UserAdmin(BaseUserAdmin):
         "date_joined",
     )
 
-    search_fields = ("email", "username", "first_name", "last_name", "phone_number")
+    search_fields = (
+        "email",
+        "username",
+        "first_name",
+        "last_name",
+        "phone_number",
+    )
 
     ordering = ("-date_joined",)
 
     fieldsets = (
         (None, {"fields": ("email", "username", "password")}),
-        ("Personal Info", {"fields": ("first_name", "last_name", "phone_number")}),
+        (
+            "Personal Info",
+            {"fields": ("first_name", "last_name", "phone_number")},
+        ),
         (
             "Permissions",
             {
-                "fields": ("is_active", "is_staff", "is_superuser", "is_verified", "groups", "user_permissions"),
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "is_verified",
+                    "groups",
+                    "user_permissions",
+                ),
             },
         ),
         ("Important dates", {"fields": ("last_login", "date_joined")}),

@@ -12,7 +12,11 @@ from apps.media.models import Media
 class TestPresignUploadView(TestCase):
     def setUp(self):
         self.client: APIClient = APIClient()
-        self.user = User.objects.create_user(email="testuser@example.com", username="testuser", password="TestPass123!")
+        self.user = User.objects.create_user(
+            email="testuser@example.com",
+            username="testuser",
+            password="TestPass123!",
+        )
 
         self.client.force_authenticate(user=self.user)
 
@@ -24,13 +28,17 @@ class TestPresignUploadView(TestCase):
         }
 
     @patch("apps.media.views.generate_presigned_upload_url")
-    def test_returns_presigned_url_and_creates_media(self, mock_presign: MagicMock):
+    def test_returns_presigned_url_and_creates_media(
+        self, mock_presign: MagicMock
+    ):
         mock_presign.return_value = {
             "upload_url": "https://s3.example.com/upload?sig=abc",
             "s3_key": "avatars/abc123/photo.jpg",
         }
 
-        response = self.client.post("/api/media/presign/upload/", self.valid_payload, format="json")
+        response = self.client.post(
+            "/api/media/presign/upload/", self.valid_payload, format="json"
+        )
 
         assert response.status_code == status.HTTP_200_OK
         assert "upload_url" in response.data
@@ -55,14 +63,21 @@ class TestPresignUploadView(TestCase):
     def test_requires_authentication(self):
         self.client.force_authenticate()
 
-        response = self.client.post("/api/media/presign/upload/", self.valid_payload, format="json")
+        response = self.client.post(
+            "/api/media/presign/upload/", self.valid_payload, format="json"
+        )
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_rejects_invalid_content_type(self):
-        payload = {**self.valid_payload, "content_type": "application/octet-stream"}
+        payload = {
+            **self.valid_payload,
+            "content_type": "application/octet-stream",
+        }
 
-        response = self.client.post("/api/media/presign/upload/", payload, format="json")
+        response = self.client.post(
+            "/api/media/presign/upload/", payload, format="json"
+        )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -71,7 +86,9 @@ class TestPresignUploadView(TestCase):
     def test_rejects_oversized_image(self):
         payload = {**self.valid_payload, "file_size": 15 * 1024 * 1024}
 
-        response = self.client.post("/api/media/presign/upload/", payload, format="json")
+        response = self.client.post(
+            "/api/media/presign/upload/", payload, format="json"
+        )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert Media.objects.count() == 0
@@ -90,7 +107,9 @@ class TestPresignUploadView(TestCase):
             "folder": "posts",
         }
 
-        response = self.client.post("/api/media/presign/upload/", payload, format="json")
+        response = self.client.post(
+            "/api/media/presign/upload/", payload, format="json"
+        )
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -147,7 +166,11 @@ class TestConfirmUploadView(TestCase):
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_cannot_confirm_another_users_upload(self):
-        other_user = User.objects.create_user(email="other@example.com", username="otheruser", password="TestPass123!")
+        other_user = User.objects.create_user(
+            email="other@example.com",
+            username="otheruser",
+            password="TestPass123!",
+        )
 
         self.client.force_authenticate(user=other_user)
 
@@ -187,7 +210,9 @@ class TestConfirmUploadView(TestCase):
 
     @patch("apps.media.views.delete_s3_object")
     @patch("apps.media.views.verify_s3_object")
-    def test_rejects_size_mismatch(self, mock_verify: MagicMock, mock_delete: MagicMock):
+    def test_rejects_size_mismatch(
+        self, mock_verify: MagicMock, mock_delete: MagicMock
+    ):
         mock_verify.return_value = {"actual_size": 99999, "verified": False}
 
         response = self.client.post(
@@ -242,14 +267,18 @@ class TestMediaDetailView(TestCase):
         )
 
     @patch("apps.media.serializers.generate_presigned_read_url")
-    def test_get_returns_media_with_presigned_url(self, mock_read_url: MagicMock):
+    def test_get_returns_media_with_presigned_url(
+        self, mock_read_url: MagicMock
+    ):
         mock_read_url.return_value = "https://s3.example.com/photo.jpg?sig=abc"
 
         response = self.client.get(f"/api/media/{self.media.id}/")
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["id"] == str(self.media.id)
-        assert response.data["url"] == "https://s3.example.com/photo.jpg?sig=abc"
+        assert (
+            response.data["url"] == "https://s3.example.com/photo.jpg?sig=abc"
+        )
         assert response.data["media_type"] == "image"
         assert response.data["file_name"] == "photo.jpg"
 
@@ -264,7 +293,11 @@ class TestMediaDetailView(TestCase):
         mock_read_url.assert_not_called()
 
     def test_cannot_access_another_users_media(self):
-        other_user = User.objects.create_user(email="other@example.com", username="otheruser", password="TestPass123!")
+        other_user = User.objects.create_user(
+            email="other@example.com",
+            username="otheruser",
+            password="TestPass123!",
+        )
 
         self.client.force_authenticate(user=other_user)
 
@@ -285,7 +318,11 @@ class TestMediaDetailView(TestCase):
 
     @patch("apps.media.views.delete_s3_object")
     def test_cannot_delete_another_users_media(self, mock_delete: MagicMock):
-        other_user = User.objects.create_user(email="other@example.com", username="otheruser", password="TestPass123!")
+        other_user = User.objects.create_user(
+            email="other@example.com",
+            username="otheruser",
+            password="TestPass123!",
+        )
 
         self.client.force_authenticate(user=other_user)
 

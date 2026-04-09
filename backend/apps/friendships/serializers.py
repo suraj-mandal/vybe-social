@@ -50,7 +50,11 @@ class FriendRequestSerializer(serializers.ModelSerializer):
             `full_name`.
         :rtype: dict
         """
-        return {"id": str(user.id), "username": user.username, "full_name": user.get_full_name()}
+        return {
+            "id": str(user.id),
+            "username": user.username,
+            "full_name": user.get_full_name(),
+        }
 
     def get_sender(self, friend_request: FriendRequest) -> dict[str, str]:
         """

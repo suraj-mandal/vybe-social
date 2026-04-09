@@ -17,7 +17,13 @@ class Profile(models.Model):
 
     bio = models.TextField(max_length=500, blank=True)
 
-    avatar = models.ForeignKey("media.Media", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    avatar = models.ForeignKey(
+        "media.Media",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
 
     location = models.CharField(max_length=100, blank=True)
 

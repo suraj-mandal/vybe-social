@@ -20,4 +20,6 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # -- Only serve json responses in production, no browsable API
 
-REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = ["rest_framework.renderers.JSONRenderer"]
+REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+    "rest_framework.renderers.JSONRenderer"
+]

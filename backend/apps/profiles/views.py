@@ -12,7 +12,9 @@ class CurrentUserProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self) -> Profile | None:
-        return Profile.objects.select_related("user", "avatar").get(user=self.request.user)
+        return Profile.objects.select_related("user", "avatar").get(
+            user=self.request.user
+        )
 
 
 class PublicProfileDetailView(generics.RetrieveAPIView):

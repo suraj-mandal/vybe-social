@@ -21,6 +21,8 @@ def validate_phone_number(phone_number: str) -> str:
     cleaned_phone_number = re.sub(r"[^\d+]", "", phone_number)
 
     if not re.match(r"^\+?\d{7,15}$", cleaned_phone_number):
-        raise ValidationError("Enter a valid phone number (7-15 digits, optionally starting with +).")
+        raise ValidationError(
+            "Enter a valid phone number (7-15 digits, optionally starting with +)."
+        )
 
     return cleaned_phone_number

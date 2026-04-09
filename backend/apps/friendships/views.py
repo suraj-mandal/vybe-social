@@ -12,8 +12,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.models import User
-from apps.friendships.models import FriendRequest, update_friend_request_from_pending, update_friend_request_to_pending
-from apps.friendships.serializers import FriendRequestSerializer, FriendSummarySerializer
+from apps.friendships.models import (
+    FriendRequest,
+    update_friend_request_from_pending,
+    update_friend_request_to_pending,
+)
+from apps.friendships.serializers import (
+    FriendRequestSerializer,
+    FriendSummarySerializer,
+)
 
 
 # view to send a friend request
@@ -61,7 +68,8 @@ class SendFriendRequestView(APIView):
 
         # checking for existing rows between these two users
         existing: FriendRequest = FriendRequest.objects.filter(
-            Q(sender=request_user, receiver=receiver) | Q(sender=receiver, receiver=request_user)
+            Q(sender=request_user, receiver=receiver)
+            | Q(sender=receiver, receiver=request_user)
         ).first()
 
         if existing:
@@ -74,7 +82,9 @@ class SendFriendRequestView(APIView):
 
                 case FriendRequest.Status.PENDING:
                     return Response(
-                        {"detail": "A pending friend request already exists between you and this user."},
+                        {
+                            "detail": "A pending friend request already exists between you and this user."
+                        },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
@@ -85,26 +95,37 @@ class SendFriendRequestView(APIView):
                         message = request.data.get("message", "").strip()[:300]
 
                         existing = update_friend_request_to_pending(
-                            existing_friend_request=existing, sender=request_user, receiver=receiver, message=message
+                            existing_friend_request=existing,
+                            sender=request_user,
+                            receiver=receiver,
+                            message=message,
                         )
 
                         serializer = FriendRequestSerializer(existing)
-                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                        return Response(
+                            serializer.data, status=status.HTTP_201_CREATED
+                        )
 
                     # The current user was the sender who GOT declined,
                     # So, they should be able to send the request based on the configured
                     # cooldown period
 
-                    receiver_cooldown: int = receiver.profile.friend_request_cooldown
+                    receiver_cooldown: int = (
+                        receiver.profile.friend_request_cooldown
+                    )
                     if receiver_cooldown is not None:
                         cooldown_days = receiver_cooldown
                     else:
-                        cooldown_days = getattr(django_settings, "FRIEND_REQUEST_COOLDOWN_DAYS", 20)
+                        cooldown_days = getattr(
+                            django_settings, "FRIEND_REQUEST_COOLDOWN_DAYS", 20
+                        )
 
                     if cooldown_days == 0:
                         # user will not be able to send the friend request anymore
                         return Response(
-                            {"detail": "This user does not accept re-requests after declining."},
+                            {
+                                "detail": "This user does not accept re-requests after declining."
+                            },
                             status=status.HTTP_403_FORBIDDEN,
                         )
 
@@ -131,7 +152,10 @@ class SendFriendRequestView(APIView):
                     message = request.data.get("message", "").strip()[:300]
 
                     existing = update_friend_request_to_pending(
-                        existing_friend_request=existing, sender=request_user, receiver=receiver, message=message
+                        existing_friend_request=existing,
+                        sender=request_user,
+                        receiver=receiver,
+                        message=message,
                     )
 
                     serializer = FriendRequestSerializer(existing)
@@ -348,12 +372,16 @@ class UnfriendView(APIView):
 
         # now check if they are friends or not
         existing_friend_request = FriendRequest.objects.filter(
-            Q(sender=request.user, receiver=unfriend_user) | Q(sender=unfriend_user, receiver=request.user),
+            Q(sender=request.user, receiver=unfriend_user)
+            | Q(sender=unfriend_user, receiver=request.user),
             status=FriendRequest.Status.ACCEPTED,
         ).first()
 
         if not existing_friend_request:
-            return Response({"detail": "You are not friends with this user"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "You are not friends with this user"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # delete the relationship between the current user and the user to unfriend
         existing_friend_request.delete()

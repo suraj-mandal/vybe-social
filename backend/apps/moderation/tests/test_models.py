@@ -2,15 +2,27 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from apps.accounts.models import User
-from apps.moderation.models import Block, Mute, is_blocked, is_either_blocked, is_muted
+from apps.moderation.models import (
+    Block,
+    Mute,
+    is_blocked,
+    is_either_blocked,
+    is_muted,
+)
 
 
 class TestBlockModel(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
         self.charlie = User.objects.create_user(
-            email="charlie@example.com", username="charlie", password="TestPass123!"
+            email="charlie@example.com",
+            username="charlie",
+            password="TestPass123!",
         )
 
     def test_create_block(self):
@@ -80,10 +92,16 @@ class TestBlockModel(TestCase):
 
 class TestBlockManager(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
         self.charlie = User.objects.create_user(
-            email="charlie@example.com", username="charlie", password="TestPass123!"
+            email="charlie@example.com",
+            username="charlie",
+            password="TestPass123!",
         )
 
     def test_is_blocked_returns_true(self):
@@ -133,9 +151,13 @@ class TestBlockManager(TestCase):
 
 class TestMuteModel(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
 
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
 
     def test_create_mute(self):
         mute = Mute.objects.create(
@@ -201,10 +223,16 @@ class TestMuteModel(TestCase):
 
 class TestMuteManager(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
         self.charlie = User.objects.create_user(
-            email="charlie@example.com", username="charlie", password="TestPass123!"
+            email="charlie@example.com",
+            username="charlie",
+            password="TestPass123!",
         )
 
     def test_is_muted_returns_true(self):
@@ -234,9 +262,13 @@ class TestMuteManager(TestCase):
 
 class TestConvenienceFunctions(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
 
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
 
     def test_is_blocked_convenience(self):
         Block.objects.create(blocker=self.alice, blocked=self.bob)

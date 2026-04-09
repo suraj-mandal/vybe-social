@@ -2,7 +2,10 @@ from django.test import TestCase
 
 from apps.accounts.models import User
 from apps.moderation.models import Block, Mute
-from apps.moderation.serializers import BlockedUserSerializer, MutedUserSerializer
+from apps.moderation.serializers import (
+    BlockedUserSerializer,
+    MutedUserSerializer,
+)
 
 
 class TestBlockedUserSerializer(TestCase):

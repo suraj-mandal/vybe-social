@@ -45,7 +45,8 @@ class BlockManager(Manager):
         :rtype: bool
         """
         return self.filter(
-            Q(blocker=first_user, blocked=second_user) | Q(blocker=second_user, blocked=first_user)
+            Q(blocker=first_user, blocked=second_user)
+            | Q(blocker=second_user, blocked=first_user)
         ).exists()
 
     def blocked_user_ids(self, user: User) -> set[str]:
@@ -58,7 +59,9 @@ class BlockManager(Manager):
                  specified user.
         :rtype: Set[str]
         """
-        return set(self.filter(blocker=user).values_list("blocked_id", flat=True))
+        return set(
+            self.filter(blocker=user).values_list("blocked_id", flat=True)
+        )
 
     def blocked_by_user_ids(self, user: User) -> set[str]:
         """
@@ -74,7 +77,9 @@ class BlockManager(Manager):
             given user.
         :rtype: Set[str]
         """
-        return set(self.filter(blocked=user).values_list("blocker_id", flat=True))
+        return set(
+            self.filter(blocked=user).values_list("blocker_id", flat=True)
+        )
 
 
 class MuteManager(Manager):
