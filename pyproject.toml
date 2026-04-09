@@ -5,7 +5,7 @@ target-version = "py313"
 # backend check
 src = ["backend"]
 
-line-length = 120
+line-length = 88
 
 exclude = [
     "*/migrations/*",

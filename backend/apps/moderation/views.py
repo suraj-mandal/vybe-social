@@ -62,7 +62,10 @@ class BlockUserView(APIView):
 
         # check if already blocked
         if Block.objects.is_blocked(blocker, blocked_user):
-            return Response({"detail": "You have already blocked this user."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "You have already blocked this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # now do the actual blocking
         with transaction.atomic():
@@ -70,7 +73,8 @@ class BlockUserView(APIView):
 
             # delete any existing friend request that was present before
             FriendRequest.objects.filter(
-                Q(sender=blocker, receiver=blocked_user) | Q(sender=blocked_user, receiver=blocker)
+                Q(sender=blocker, receiver=blocked_user)
+                | Q(sender=blocked_user, receiver=blocker)
             ).delete()
 
             return Response(
@@ -97,7 +101,7 @@ class UnblockUserView(APIView):
         """
         Deletes a block relationship between the requesting user and another user
         specified by the ``user_id`` provided. If no block relationship exists,
-        an appropriate error response is returned. On successful deletion, a no content
+        an appropriate error response is returned. On successful deletion, a no-content
         response is provided to indicate the block was removed.
 
         :param request: The HTTP request containing the authenticated user making the delete request.
@@ -110,7 +114,9 @@ class UnblockUserView(APIView):
         """
         blocked_user = get_object_or_404(User, id=user_id)
 
-        block: Block | None = Block.objects.filter(blocker=request.user, blocked=blocked_user).first()
+        block: Block | None = Block.objects.filter(
+            blocker=request.user, blocked=blocked_user
+        ).first()
 
         if not block:
             # the user is not blocked at all
@@ -127,7 +133,7 @@ class UnblockUserView(APIView):
 class BlockedUsersListView(ListAPIView):
     """
     GET /api/blocks
-    Represents a view for retrieving a list of blocked users.
+    Represent a view for retrieving a list of blocked users.
 
     This class provides functionality to fetch and serialize information about
     users blocked by the currently authenticated user. It requires the user to
