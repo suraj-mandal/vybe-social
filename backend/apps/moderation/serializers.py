@@ -17,13 +17,11 @@ class BlockedUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Block
-        fields = (
-            [
-                "id",
-                "blocked_user",
-                "created_at",
-            ],
-        )
+        fields = [
+            "id",
+            "blocked_user",
+            "created_at",
+        ]
         read_only_fields = fields
 
     def get_blocked_user(self, current_blocked: Block) -> dict[str, str]:
