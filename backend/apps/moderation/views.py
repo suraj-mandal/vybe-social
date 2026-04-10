@@ -4,8 +4,6 @@ from collections.abc import Iterable
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from moderation.models import Mute
-from moderation.serializers import MutedUserSerializer
 from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -15,8 +13,11 @@ from rest_framework.views import APIView
 
 from apps.accounts.models import User
 from apps.friendships.models import FriendRequest
-from apps.moderation.models import Block
-from apps.moderation.serializers import BlockedUserSerializer
+from apps.moderation.models import Block, Mute
+from apps.moderation.serializers import (
+    BlockedUserSerializer,
+    MutedUserSerializer,
+)
 
 
 class BlockUserView(APIView):

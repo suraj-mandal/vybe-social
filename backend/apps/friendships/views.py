@@ -21,6 +21,7 @@ from apps.friendships.serializers import (
     FriendRequestSerializer,
     FriendSummarySerializer,
 )
+from apps.moderation.models import Block
 
 
 # view to send a friend request
@@ -64,6 +65,17 @@ class SendFriendRequestView(APIView):
             return Response(
                 {"detail": "You cannot send a friend request to yourself."},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # checking if the user had blocked the other user or not
+        if Block.objects.is_either_blocked(request_user, receiver):
+            # cannot send friend request in either case,
+            # if the current user has blocked the other user, then they have to unblock the user first.
+            return Response(
+                {
+                    "detail": "User not found.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         # checking for existing rows between these two users
