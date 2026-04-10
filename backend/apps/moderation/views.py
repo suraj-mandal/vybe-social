@@ -19,18 +19,17 @@ from apps.moderation.serializers import (
 )
 
 
-class BlockUserView(APIView):
+class UserBlockView(APIView):
     """
     POST /api/blocks/<uuid:user_id>/
+    DELETE /api/blocks/<uuid:user_id>/
 
-    View that handles user blocking functionality.
+    Handles operations related to user blocking in a social networking application.
 
-    This class-based view provides the ability for an authenticated user to block
-    another user. Blocking prevents interactions between the blocker and the blocked
-    user, such as sending friend requests. Any existing friend requests between
-    the two users are also deleted when a block occurs.
-
-    User should be authenticated to handle this.
+    This class facilitates the blocking and unblocking of users. An authenticated user can block
+    another user to prevent interactions, such as messaging, friend requests, etc. It ensures
+    logical consistency by preventing actions like self-blocking and cleaning up any conflicting
+    relationships (e.g., pending friend requests) during the block process.
     """
 
     permission_classes = [IsAuthenticated]
@@ -148,16 +147,17 @@ class BlockedUsersListView(ListAPIView):
         )
 
 
-class MuteUserView(APIView):
+class UserMuteView(APIView):
     """
     POST /api/mutes/<uuid:user_id>/
+    DELETE /api/mutes/<uuid:user_id>/
 
-    Handles muting of a user by the authenticated user.
+    Represents a view for managing user mute functionality.
 
-    This view allows an authenticated user to mute another user. It ensures that
-    a user cannot mute themselves or mute the same user multiple times. Upon
-    success, it records the mute relationship between the muter and the muted
-    user.
+    This view allows authenticated users to mute and unmute other users. The `post` method
+    is used for muting a user, ensuring that users cannot mute themselves and handling cases
+    to avoid duplicate muting. The `delete` method is responsible for unmuting users, verifying
+    the existence of the mute relationship before performing the operation.
     """
 
     permission_classes = [IsAuthenticated]
