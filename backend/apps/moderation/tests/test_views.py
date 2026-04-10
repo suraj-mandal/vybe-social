@@ -107,28 +107,11 @@ class TestBlockUserView(TestCase):
         response = self.client.post(f"/api/moderation/blocks/{self.bob.id}/")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-
-class TestUnblockUserView(TestCase):
-    def setUp(self):
-        self.client: APIClient = APIClient()
-        self.alice = User.objects.create_user(
-            email="alice@example.com",
-            username="alice",
-            password="TestPass123!",
-        )
-        self.bob = User.objects.create_user(
-            email="bob@example.com",
-            username="bob",
-            password="TestPass123!",
-        )
-        Block.objects.create(blocker=self.alice, blocked=self.bob)
-        self.client.force_authenticate(user=self.alice)
-
     def test_unblock_user(self):
+        Block.objects.create(blocker=self.alice, blocked=self.bob)
+
         # unblock bob
-        response = self.client.delete(
-            f"/api/moderation/blocks/{self.bob.id}/unblock/"
-        )
+        response = self.client.delete(f"/api/moderation/blocks/{self.bob.id}/")
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert Block.objects.count() == 0
@@ -139,7 +122,7 @@ class TestUnblockUserView(TestCase):
         # Bob tries to unblock the block that Alice imposed, so he tries the other
         # way round, which is not possible
         response = self.client.delete(
-            f"/api/moderation/blocks/{self.alice.id}/unblock/"
+            f"/api/moderation/blocks/{self.alice.id}/"
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -151,17 +134,8 @@ class TestUnblockUserView(TestCase):
             username="charlie",
             password="TestPass123!",
         )
-        response = self.client.delete(
-            f"/api/moderation/blocks/{charlie.id}/unblock/"
-        )
+        response = self.client.delete(f"/api/moderation/blocks/{charlie.id}/")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    def test_requires_authentication(self):
-        self.client.force_authenticate()
-        response = self.client.delete(
-            f"/api/moderation/blocks/{self.bob.id}/unblock/"
-        )
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 class TestBlockedUsersListView(TestCase):
@@ -261,27 +235,10 @@ class TestMuteUserView(TestCase):
         response = self.client.post(f"/api/moderation/mutes/{self.bob.id}/")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-
-class TestUnmuteUserView(TestCase):
-    def setUp(self):
-        self.client: APIClient = APIClient()
-        self.alice = User.objects.create_user(
-            email="alice@example.com",
-            username="alice",
-            password="TestPass123!",
-        )
-        self.bob = User.objects.create_user(
-            email="bob@example.com",
-            username="bob",
-            password="TestPass123!",
-        )
-        Mute.objects.create(muter=self.alice, muted=self.bob)
-        self.client.force_authenticate(user=self.alice)
-
     def test_unmute_user(self):
-        response = self.client.delete(
-            f"/api/moderation/mutes/{self.bob.id}/unmute/"
-        )
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+
+        response = self.client.delete(f"/api/moderation/mutes/{self.bob.id}/")
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert Mute.objects.count() == 0
@@ -289,9 +246,7 @@ class TestUnmuteUserView(TestCase):
     def test_muted_user_cannot_unmute(self):
         self.client.force_authenticate(user=self.bob)
 
-        response = self.client.delete(
-            f"/api/moderation/mutes/{self.alice.id}/unmute/"
-        )
+        response = self.client.delete(f"/api/moderation/mutes/{self.alice.id}/")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_unmute_user_cannot_be_unmuted(self):
@@ -301,17 +256,8 @@ class TestUnmuteUserView(TestCase):
             username="charlie",
         )
 
-        response = self.client.delete(
-            f"/api/moderation/mutes/{charlie.id}/unmute/"
-        )
+        response = self.client.delete(f"/api/moderation/mutes/{charlie.id}/")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    def test_requires_authentication(self):
-        self.client.force_authenticate()
-        response = self.client.delete(
-            f"/api/moderation/mutes/{self.bob.id}/unmute/"
-        )
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 class TestMutedUsersListView(TestCase):

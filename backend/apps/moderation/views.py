@@ -1,8 +1,7 @@
 # Create your views here.
-from collections.abc import Iterable
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import ListAPIView
@@ -80,25 +79,10 @@ class BlockUserView(APIView):
                 | Q(sender=blocked_user, receiver=blocker)
             ).delete()
 
-            return Response(
-                {"detail": f"You have blocked {blocked_user.username}"},
-                status=status.HTTP_201_CREATED,
-            )
-
-
-class UnblockUserView(APIView):
-    """
-    DELETE /api/blocks/<uuid:user_id>/
-
-    Provides the functionality to unblock a user.
-
-    This view handles the removal of a blocking relationship between the
-    authenticated user and a specified user. It ensures the user to be
-    unblocked exists and that such a blocking relationship currently exists
-    before performing the unblock operation.
-    """
-
-    permission_classes = [IsAuthenticated]
+        return Response(
+            {"detail": f"You have blocked {blocked_user.username}"},
+            status=status.HTTP_201_CREATED,
+        )
 
     def delete(self, request: Request, user_id: str):
         """
@@ -146,7 +130,7 @@ class BlockedUsersListView(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = BlockedUserSerializer
 
-    def get_queryset(self) -> Iterable[BlockedUserSerializer]:
+    def get_queryset(self) -> QuerySet[Block]:
         """
         Retrieves a queryset of blocked users for the current requesting user.
 
@@ -213,21 +197,6 @@ class MuteUserView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-
-class UnmuteUserView(APIView):
-    """
-    DELETE /api/mutes/<uuid:user_id>/unmute/
-
-    Provides functionality to unmute a previously muted user.
-
-    This view handles the deletion of a mute relationship between the current user
-    and the specified user, allowing the current user to unmute another user. It
-    requires the user to be authenticated and ensures that a mute relationship
-    exists before removing it.
-    """
-
-    permission_classes = [IsAuthenticated]
-
     def delete(self, request: Request, user_id: str) -> Response:
         """
         Handles the deletion of a mute relationship between the current user and a specified user.
@@ -276,7 +245,7 @@ class MutedUsersListView(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = MutedUserSerializer
 
-    def get_queryset(self) -> Iterable[MutedUserSerializer]:
+    def get_queryset(self) -> QuerySet[Mute]:
         """
         Fetches the list of users muted by the currently authenticated user.
 
