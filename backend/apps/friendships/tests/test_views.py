@@ -109,7 +109,10 @@ class TestSendFriendRequestView(TestCase):
 
     def test_decliner_can_send_freely(self):
         declined: FriendRequest = FriendRequest.objects.create(
-            sender=self.alice, receiver=self.bob, status=FriendRequest.Status.DECLINED, responded_at=timezone.now()
+            sender=self.alice,
+            receiver=self.bob,
+            status=FriendRequest.Status.DECLINED,
+            responded_at=timezone.now(),
         )
 
         self.client.force_authenticate(user=self.bob)
@@ -241,11 +244,15 @@ class TestAcceptFriendRequestView(TestCase):
             username="bob",
             password="TestPass123!",
         )
-        self.friend_request: FriendRequest = FriendRequest.objects.create(sender=self.alice, receiver=self.bob)
+        self.friend_request: FriendRequest = FriendRequest.objects.create(
+            sender=self.alice, receiver=self.bob
+        )
         self.client.force_authenticate(user=self.bob)
 
     def test_accept_pending_request(self):
-        response = self.client.post(f"/api/friends/accept/{self.friend_request.id}/")
+        response = self.client.post(
+            f"/api/friends/accept/{self.friend_request.id}/"
+        )
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["status"] == "accepted"
@@ -258,7 +265,9 @@ class TestAcceptFriendRequestView(TestCase):
     def test_only_receiver_can_accept(self):
         self.client.force_authenticate(user=self.alice)
 
-        response = self.client.post(f"/api/friends/accept/{self.friend_request.id}/")
+        response = self.client.post(
+            f"/api/friends/accept/{self.friend_request.id}/"
+        )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -266,7 +275,9 @@ class TestAcceptFriendRequestView(TestCase):
         self.friend_request.status = FriendRequest.Status.ACCEPTED
         self.friend_request.save()
 
-        response = self.client.post(f"/api/friends/accept/{self.friend_request.id}/")
+        response = self.client.post(
+            f"/api/friends/accept/{self.friend_request.id}/"
+        )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -295,11 +306,15 @@ class TestDeclineFriendRequestView(TestCase):
             username="bob",
             password="TestPass123!",
         )
-        self.friend_request: FriendRequest = FriendRequest.objects.create(sender=self.alice, receiver=self.bob)
+        self.friend_request: FriendRequest = FriendRequest.objects.create(
+            sender=self.alice, receiver=self.bob
+        )
         self.client.force_authenticate(user=self.bob)
 
     def test_decline_pending_request(self):
-        response = self.client.post(f"/api/friends/decline/{self.friend_request.id}/")
+        response = self.client.post(
+            f"/api/friends/decline/{self.friend_request.id}/"
+        )
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["status"] == "declined"
@@ -312,7 +327,9 @@ class TestDeclineFriendRequestView(TestCase):
     def test_only_receiver_can_decline(self):
         self.client.force_authenticate(user=self.alice)
 
-        response = self.client.post(f"/api/friends/decline/{self.friend_request.id}/")
+        response = self.client.post(
+            f"/api/friends/decline/{self.friend_request.id}/"
+        )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -320,7 +337,9 @@ class TestDeclineFriendRequestView(TestCase):
         self.friend_request.status = FriendRequest.Status.DECLINED
         self.friend_request.save()
 
-        response = self.client.post(f"/api/friends/decline/{self.friend_request.id}/")
+        response = self.client.post(
+            f"/api/friends/decline/{self.friend_request.id}/"
+        )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -349,11 +368,15 @@ class TestCancelFriendRequestView(TestCase):
             username="bob",
             password="TestPass123!",
         )
-        self.friend_request: FriendRequest = FriendRequest.objects.create(sender=self.alice, receiver=self.bob)
+        self.friend_request: FriendRequest = FriendRequest.objects.create(
+            sender=self.alice, receiver=self.bob
+        )
         self.client.force_authenticate(user=self.alice)
 
     def test_cancel_pending_request(self):
-        response = self.client.delete(f"/api/friends/cancel/{self.friend_request.id}/")
+        response = self.client.delete(
+            f"/api/friends/cancel/{self.friend_request.id}/"
+        )
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert FriendRequest.objects.count() == 0
@@ -361,7 +384,9 @@ class TestCancelFriendRequestView(TestCase):
     def test_only_sender_can_cancel(self):
         self.client.force_authenticate(user=self.bob)
 
-        response = self.client.delete(f"/api/friends/cancel/{self.friend_request.id}/")
+        response = self.client.delete(
+            f"/api/friends/cancel/{self.friend_request.id}/"
+        )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -369,7 +394,9 @@ class TestCancelFriendRequestView(TestCase):
         self.friend_request.status = FriendRequest.Status.ACCEPTED
         self.friend_request.save()
 
-        response = self.client.delete(f"/api/friends/cancel/{self.friend_request.id}/")
+        response = self.client.delete(
+            f"/api/friends/cancel/{self.friend_request.id}/"
+        )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -409,7 +436,11 @@ class TestUnfriendView(TestCase):
         assert FriendRequest.objects.count() == 0
 
     def test_cannot_unfriend_non_friend(self):
-        charlie = User.objects.create_user(email="charlie@example.com", username="charlie", password="TestPass123!")
+        charlie = User.objects.create_user(
+            email="charlie@example.com",
+            username="charlie",
+            password="TestPass123!",
+        )
         response = self.client.delete(f"/api/friends/{charlie.id}/")
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST

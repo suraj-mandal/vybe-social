@@ -49,7 +49,9 @@ def _to_external_url(presigned_url: str) -> str:
     return presigned_url.replace(internal, external)
 
 
-def generate_presigned_upload_url(folder: str, filename: str, content_type: str, file_size: int) -> dict[str, str]:
+def generate_presigned_upload_url(
+    folder: str, filename: str, content_type: str, file_size: int
+) -> dict[str, str]:
     """
     Generates a presigned URL for uploading a file to S3. This function constructs
     a unique S3 object key based on the provided folder, filename, and a generated
@@ -79,7 +81,11 @@ def generate_presigned_upload_url(folder: str, filename: str, content_type: str,
 
     extension = filename.rsplit(".", 1)[-1] if "." in filename else ""
     unique_id = uuid.uuid4().hex
-    s3_key = f"{folder}/{unique_id}/{filename}" if extension else f"{folder}/{unique_id}"
+    s3_key = (
+        f"{folder}/{unique_id}/{filename}"
+        if extension
+        else f"{folder}/{unique_id}"
+    )
 
     presigned_url = s3.generate_presigned_url(
         ClientMethod="put_object",
@@ -149,4 +155,7 @@ def verify_s3_object(s3_key: str, expected_size: int) -> dict[str, Any]:
 
     actual_size = response["ContentLength"]
 
-    return {"actual_size": actual_size, "verified": actual_size == expected_size}
+    return {
+        "actual_size": actual_size,
+        "verified": actual_size == expected_size,
+    }

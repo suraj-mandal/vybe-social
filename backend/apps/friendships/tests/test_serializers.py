@@ -2,7 +2,10 @@ from django.test import TestCase
 
 from apps.accounts.models import User
 from apps.friendships.models import FriendRequest
-from apps.friendships.serializers import FriendRequestSerializer, FriendSummarySerializer
+from apps.friendships.serializers import (
+    FriendRequestSerializer,
+    FriendSummarySerializer,
+)
 
 
 class TestFriendRequestSerializer(TestCase):
@@ -22,7 +25,9 @@ class TestFriendRequestSerializer(TestCase):
             last_name="Jones",
         )
 
-        self.request_obj: FriendRequest = FriendRequest.objects.create(sender=self.alice, receiver=self.bob)
+        self.request_obj: FriendRequest = FriendRequest.objects.create(
+            sender=self.alice, receiver=self.bob
+        )
 
     def test_serializes_friend_request(self):
         serializer = FriendRequestSerializer(self.request_obj)

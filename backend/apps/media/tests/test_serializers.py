@@ -1,7 +1,10 @@
 from django.test import TestCase
 
 from apps.media.models import Media
-from apps.media.serializers import ConfirmUploadSerializer, PresignUploadSerializer
+from apps.media.serializers import (
+    ConfirmUploadSerializer,
+    PresignUploadSerializer,
+)
 
 
 class TestPresignUploadSerializer(TestCase):
@@ -32,7 +35,12 @@ class TestPresignUploadSerializer(TestCase):
         assert serializer.validated_data["media_type"] == Media.MediaType.VIDEO
 
     def test_all_allowed_image_types(self):
-        for content_type in ["image/jpeg", "image/png", "image/webp", "image/gif"]:
+        for content_type in [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif",
+        ]:
             data = {
                 "file_name": "test.img",
                 "content_type": content_type,
@@ -42,7 +50,9 @@ class TestPresignUploadSerializer(TestCase):
 
             serializer = PresignUploadSerializer(data=data)
 
-            assert serializer.is_valid(), f"{content_type} should be allowed: {serializer.errors}"
+            assert serializer.is_valid(), (
+                f"{content_type} should be allowed: {serializer.errors}"
+            )
 
     def test_all_allowed_video_types(self):
         for content_type in ["video/mp4", "video/webm", "video/quicktime"]:
@@ -55,7 +65,9 @@ class TestPresignUploadSerializer(TestCase):
 
             serializer = PresignUploadSerializer(data=data)
 
-            assert serializer.is_valid(), f"{content_type} should be allowed: {serializer.errors}"
+            assert serializer.is_valid(), (
+                f"{content_type} should be allowed: {serializer.errors}"
+            )
 
     def test_rejects_unsupported_content_type(self):
         data = {

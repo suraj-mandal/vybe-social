@@ -20,7 +20,10 @@ class TestToExternalUrl(TestCase):
         internal = "http://minio:9000/vybe-media/avatars/photo.jpg?sig=abc"
         result = _to_external_url(internal)
 
-        assert result == "http://localhost:9000/vybe-media/avatars/photo.jpg?sig=abc"
+        assert (
+            result
+            == "http://localhost:9000/vybe-media/avatars/photo.jpg?sig=abc"
+        )
 
     @override_settings(AWS_S3_ENDPOINT_URL="", AWS_S3_EXTERNAL_URL="")
     def test_noop_when_urls_are_empty(self):
@@ -29,7 +32,9 @@ class TestToExternalUrl(TestCase):
 
         assert result == url
 
-    @override_settings(AWS_S3_ENDPOINT_URL="http://minio:9000", AWS_S3_EXTERNAL_URL="")
+    @override_settings(
+        AWS_S3_ENDPOINT_URL="http://minio:9000", AWS_S3_EXTERNAL_URL=""
+    )
     def test_noop_when_external_is_empty(self):
         url = "http://minio:9000/vybe-media/photo.jpg?sig=abc"
         result = _to_external_url(url)
@@ -45,9 +50,13 @@ class TestGeneratePresignedUploadUrl(TestCase):
         AWS_S3_EXTERNAL_URL="",
         AWS_S3_ENDPOINT_URL="",
     )
-    def test_generates_upload_url_with_correct_params(self, mock_get_client: MagicMock):
+    def test_generates_upload_url_with_correct_params(
+        self, mock_get_client: MagicMock
+    ):
         mock_s3 = MagicMock()
-        mock_s3.generate_presigned_url.return_value = "https://s3.example.com/signed-url"
+        mock_s3.generate_presigned_url.return_value = (
+            "https://s3.example.com/signed-url"
+        )
         mock_get_client.return_value = mock_s3
 
         result = generate_presigned_upload_url(
@@ -78,11 +87,17 @@ class TestGeneratePresignedUploadUrl(TestCase):
     )
     def test_generates_unique_s3_keys(self, mock_get_client: MagicMock):
         mock_s3 = MagicMock()
-        mock_s3.generate_presigned_url.return_value = "https://s3.example.com/signed"
+        mock_s3.generate_presigned_url.return_value = (
+            "https://s3.example.com/signed"
+        )
         mock_get_client.return_value = mock_s3
 
-        result1 = generate_presigned_upload_url("avatars", "photo.jpg", "image/jpeg", 1024)
-        result2 = generate_presigned_upload_url("avatars", "photo.jpg", "image/jpeg", 1024)
+        result1 = generate_presigned_upload_url(
+            "avatars", "photo.jpg", "image/jpeg", 1024
+        )
+        result2 = generate_presigned_upload_url(
+            "avatars", "photo.jpg", "image/jpeg", 1024
+        )
 
         assert result1["s3_key"] != result2["s3_key"]
 
@@ -97,7 +112,9 @@ class TestGeneratePresignedReadUrl(TestCase):
     )
     def test_generates_read_url(self, mock_get_client: MagicMock):
         mock_s3 = MagicMock()
-        mock_s3.generate_presigned_url.return_value = "https://s3.example.com/read-url"
+        mock_s3.generate_presigned_url.return_value = (
+            "https://s3.example.com/read-url"
+        )
         mock_get_client.return_value = mock_s3
 
         result = generate_presigned_read_url("avatars/abc123/photo.jpg")
@@ -119,7 +136,9 @@ class TestDeleteS3Object(TestCase):
 
         delete_s3_object("avatars/abc123/photo.jpg")
 
-        mock_s3.delete_object.assert_called_once_with(Bucket="test-bucket", Key="avatars/abc123/photo.jpg")
+        mock_s3.delete_object.assert_called_once_with(
+            Bucket="test-bucket", Key="avatars/abc123/photo.jpg"
+        )
 
 
 class TestVerifyS3Object(TestCase):

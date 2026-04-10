@@ -60,21 +60,30 @@ class PresignUploadSerializer(serializers.Serializer):
         if content_type in settings.MEDIA_ALLOWED_IMAGE_TYPES:
             if file_size > settings.MEDIA_MAX_IMAGE_SIZE:
                 raise serializers.ValidationError(
-                    {"file_size": f"Image must be under {settings.MEDIA_MAX_IMAGE_SIZE // (1024**2)} MB."}
+                    {
+                        "file_size": f"Image must be under {settings.MEDIA_MAX_IMAGE_SIZE // (1024**2)} MB."
+                    }
                 )
             attrs["media_type"] = Media.MediaType.IMAGE
 
         elif content_type in settings.MEDIA_ALLOWED_VIDEO_TYPES:
             if file_size > settings.MEDIA_MAX_VIDEO_SIZE:
                 raise serializers.ValidationError(
-                    {"file_size": f"Video must be under {settings.MEDIA_MAX_IMAGE_SIZE // (1024**2)} MB."}
+                    {
+                        "file_size": f"Video must be under {settings.MEDIA_MAX_IMAGE_SIZE // (1024**2)} MB."
+                    }
                 )
             attrs["media_type"] = Media.MediaType.VIDEO
 
         else:
-            allowed_content_types = settings.MEDIA_ALLOWED_IMAGE_TYPES + settings.MEDIA_ALLOWED_VIDEO_TYPES
+            allowed_content_types = (
+                settings.MEDIA_ALLOWED_IMAGE_TYPES
+                + settings.MEDIA_ALLOWED_VIDEO_TYPES
+            )
             raise serializers.ValidationError(
-                {"content_type": f"Unsupported file type. Allowed: {', '.join(allowed_content_types)}"}
+                {
+                    "content_type": f"Unsupported file type. Allowed: {', '.join(allowed_content_types)}"
+                }
             )
 
         return attrs

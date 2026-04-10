@@ -4,7 +4,10 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .emails import send_password_reset_email, send_verification_email
@@ -97,7 +100,9 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
-    def create(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def create(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         """
         Handles the creation of a new user and generates JWT tokens for authentication.
 
@@ -129,7 +134,10 @@ class RegisterView(generics.CreateAPIView):
         return Response(
             {
                 "user": UserSerializer(user).data,
-                "tokens": {"access": str(refresh.access_token), "refresh": str(refresh)},
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
             },
             status=status.HTTP_201_CREATED,
         )
@@ -153,7 +161,9 @@ class VerifyEmailView(generics.GenericAPIView):
     serializer_class = VerifyEmailSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         """
         Handles the POST request for email verification. Validates the request data using a serializer,
         marks the user as verified upon successful validation, and updates the `is_verified`
@@ -199,7 +209,9 @@ class ResendVerificationView(generics.GenericAPIView):
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         """
         Handles the HTTP POST request to send an email verification link to
         the user. If the user's email is already verified, it returns an
@@ -248,7 +260,9 @@ class PasswordResetRequestView(generics.GenericAPIView):
     serializer_class = PasswordResetRequestSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         """
         Handles the password reset process by validating the provided email and sending
         a password reset link to the associated user account, if it exists. If no user
@@ -276,7 +290,11 @@ class PasswordResetRequestView(generics.GenericAPIView):
             pass
 
         return Response(
-            {"detail": ("If an account with this email exists, a password reset link has been sent.")},
+            {
+                "detail": (
+                    "If an account with this email exists, a password reset link has been sent."
+                )
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -301,7 +319,9 @@ class PasswordResetConfirmView(generics.GenericAPIView):
     serializer_class = PasswordResetConfirmSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         """
         Handles POST requests for resetting a user's password. Validates the incoming data
         using the serializer, updates the user's password, and saves the changes to the
@@ -347,7 +367,9 @@ class ChangePasswordView(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         """
         Handles the logic for updating the user's password based on the provided request data.
         This method validates the input data using a serializer, updates the user's password
@@ -396,7 +418,9 @@ class SocialAuthView(generics.GenericAPIView):
     serializer_class = SocialAuthSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         """
         Handles the creation or retrieval of a user account based on social login information
         provided through a request. If the social account already exists, its associated user
@@ -459,7 +483,10 @@ class SocialAuthView(generics.GenericAPIView):
         return Response(
             {
                 "user": UserSerializer(user).data,
-                "tokens": {"access": str(refresh.access_token), "refresh": str(refresh)},
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
             }
         )
 
@@ -515,7 +542,9 @@ class SendOTPView(generics.GenericAPIView):
     serializer_class = SendOTPSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         """
         Handles the HTTP POST request to send an OTP (One-Time Password) for phone number
         verification. The OTP is generated and sent via an SMS backend.
@@ -561,7 +590,9 @@ class VerifyOTPView(generics.GenericAPIView):
     serializer_class = VerifyOTPSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -624,9 +655,13 @@ class VerifyOTPView(generics.GenericAPIView):
 # This will logout from the current device
 class LogoutFromCurrentDeviceView(generics.GenericAPIView):
     serializer_class = LogoutSerializer
-    permission_classes = [IsAuthenticated]  # only authenticated users can log out
+    permission_classes = [
+        IsAuthenticated
+    ]  # only authenticated users can log out
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -645,7 +680,9 @@ class LogoutFromCurrentDeviceView(generics.GenericAPIView):
 class LogoutFromAllDevicesView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         tokens = OutstandingToken.objects.filter(
             user=request.user,
             blacklistedtoken__isnull=True,  # tokens that are not blacklisted yet
@@ -660,6 +697,8 @@ class LogoutFromAllDevicesView(generics.GenericAPIView):
         # using len(tokens) here will trigger a DB query again.
 
         return Response(
-            {"detail": f"Logged out from all devices. {len(created_blacklisted_tokens)} sessions terminated."},
+            {
+                "detail": f"Logged out from all devices. {len(created_blacklisted_tokens)} sessions terminated."
+            },
             status=status.HTTP_200_OK,
         )

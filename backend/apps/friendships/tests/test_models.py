@@ -8,14 +8,22 @@ from apps.friendships.models import FriendRequest, are_friends
 
 class TestFriendRequestModel(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
         self.charlie = User.objects.create_user(
-            email="charlie@example.com", username="charlie", password="TestPass123!"
+            email="charlie@example.com",
+            username="charlie",
+            password="TestPass123!",
         )
 
     def test_create_friend_request(self):
-        request: FriendRequest = FriendRequest.objects.create(sender=self.alice, receiver=self.bob)
+        request: FriendRequest = FriendRequest.objects.create(
+            sender=self.alice, receiver=self.bob
+        )
 
         assert request.status == FriendRequest.Status.PENDING
         assert request.sender == self.alice
@@ -33,7 +41,9 @@ class TestFriendRequestModel(TestCase):
         assert request.message == greeting_message
 
     def test_str_representation(self):
-        request: FriendRequest = FriendRequest.objects.create(sender=self.alice, receiver=self.bob)
+        request: FriendRequest = FriendRequest.objects.create(
+            sender=self.alice, receiver=self.bob
+        )
 
         assert str(request) == f"{self.alice} -> {self.bob} (pending)"
 
@@ -85,15 +95,27 @@ class TestFriendRequestModel(TestCase):
 
 class TestFriendRequestManager(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
-        self.charlie = User.objects.create_user(
-            email="charlie@example.com", username="charlie", password="TestPass123!"
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
         )
-        self.dave = User.objects.create_user(email="dave@example.com", username="dave", password="TestPass123!")
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
+        self.charlie = User.objects.create_user(
+            email="charlie@example.com",
+            username="charlie",
+            password="TestPass123!",
+        )
+        self.dave = User.objects.create_user(
+            email="dave@example.com", username="dave", password="TestPass123!"
+        )
 
     def test_are_friends_returns_true_for_accepted_request(self):
-        FriendRequest.objects.create(sender=self.alice, receiver=self.bob, status=FriendRequest.Status.ACCEPTED)
+        FriendRequest.objects.create(
+            sender=self.alice,
+            receiver=self.bob,
+            status=FriendRequest.Status.ACCEPTED,
+        )
 
         assert FriendRequest.objects.are_friends(self.alice, self.bob) is True
 
@@ -160,7 +182,11 @@ class TestFriendRequestManager(TestCase):
     def test_pending_received(self):
         FriendRequest.objects.create(sender=self.bob, receiver=self.alice)
         FriendRequest.objects.create(sender=self.charlie, receiver=self.alice)
-        FriendRequest.objects.create(sender=self.dave, receiver=self.alice, status=FriendRequest.Status.ACCEPTED)
+        FriendRequest.objects.create(
+            sender=self.dave,
+            receiver=self.alice,
+            status=FriendRequest.Status.ACCEPTED,
+        )
 
         pending: QuerySet = FriendRequest.objects.pending_received(self.alice)
         assert pending.count() == 2
@@ -168,7 +194,11 @@ class TestFriendRequestManager(TestCase):
     def test_pending_sent(self):
         FriendRequest.objects.create(receiver=self.bob, sender=self.alice)
         FriendRequest.objects.create(receiver=self.charlie, sender=self.alice)
-        FriendRequest.objects.create(sender=self.dave, receiver=self.alice, status=FriendRequest.Status.ACCEPTED)
+        FriendRequest.objects.create(
+            sender=self.dave,
+            receiver=self.alice,
+            status=FriendRequest.Status.ACCEPTED,
+        )
 
         pending: QuerySet = FriendRequest.objects.pending_sent(self.alice)
         assert pending.count() == 2
@@ -176,8 +206,12 @@ class TestFriendRequestManager(TestCase):
 
 class TestAreFriendsConvenience(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
 
     def test_convenience_function_works(self):
         FriendRequest.objects.create(

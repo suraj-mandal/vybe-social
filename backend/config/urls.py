@@ -25,4 +25,5 @@ urlpatterns = [
     path("api/profiles/", include("apps.profiles.urls")),
     path("api/media/", include("apps.media.urls")),
     path("api/friends/", include("apps.friendships.urls")),
+    path("api/moderation/", include("apps.moderation.urls")),
 ]

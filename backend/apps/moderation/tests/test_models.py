@@ -2,15 +2,27 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from apps.accounts.models import User
-from apps.moderation.models import Block
+from apps.moderation.models import (
+    Block,
+    Mute,
+    is_blocked,
+    is_either_blocked,
+    is_muted,
+)
 
 
 class TestBlockModel(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
         self.charlie = User.objects.create_user(
-            email="charlie@example.com", username="charlie", password="TestPass123!"
+            email="charlie@example.com",
+            username="charlie",
+            password="TestPass123!",
         )
 
     def test_create_block(self):
@@ -80,10 +92,16 @@ class TestBlockModel(TestCase):
 
 class TestBlockManager(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(email="alice@example.com", username="alice", password="TestPass123!")
-        self.bob = User.objects.create_user(email="bob@example.com", username="bob", password="TestPass123!")
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
         self.charlie = User.objects.create_user(
-            email="charlie@example.com", username="charlie", password="TestPass123!"
+            email="charlie@example.com",
+            username="charlie",
+            password="TestPass123!",
         )
 
     def test_is_blocked_returns_true(self):
@@ -129,3 +147,140 @@ class TestBlockManager(TestCase):
 
         ids = Block.objects.blocked_by_user_ids(self.alice)
         assert ids == {self.bob.id, self.charlie.id}
+
+
+class TestMuteModel(TestCase):
+    def setUp(self):
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
+
+    def test_create_mute(self):
+        mute = Mute.objects.create(
+            muter=self.alice,
+            muted=self.bob,
+        )
+
+        assert mute.muter == self.alice
+        assert mute.muted == self.bob
+        assert mute.created_at is not None
+        assert Mute.objects.count() == 1
+
+    def test_str_representation(self):
+        mute = Mute.objects.create(
+            muter=self.alice,
+            muted=self.bob,
+        )
+
+        assert str(mute) == f"{self.alice} muted {self.bob}"
+
+    def test_unique_constraint_prevents_duplicate_mute(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+
+        with self.assertRaises(IntegrityError):
+            Mute.objects.create(muter=self.alice, muted=self.bob)
+
+    def test_reverse_mute_is_allowed(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+
+        Mute.objects.create(muter=self.bob, muted=self.alice)
+
+        assert Mute.objects.count() == 2
+
+    def test_check_constraint_prevents_self_mute(self):
+        with self.assertRaises(IntegrityError):
+            Mute.objects.create(
+                muter=self.alice,
+                muted=self.alice,
+            )
+
+    def test_cascade_delete_muter(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+        self.alice.delete()
+
+        assert Mute.objects.count() == 0
+
+    def test_cascade_delete_muted(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+        self.bob.delete()
+
+        assert Mute.objects.count() == 0
+
+    def test_related_name_mutes_given(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+        assert self.alice.mutes_given.count() == 1
+        assert self.bob.mutes_given.count() == 0
+
+    def test_related_names_mutes_received(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+        assert self.alice.mutes_received.count() == 0
+        assert self.bob.mutes_received.count() == 1
+
+
+class TestMuteManager(TestCase):
+    def setUp(self):
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
+        self.charlie = User.objects.create_user(
+            email="charlie@example.com",
+            username="charlie",
+            password="TestPass123!",
+        )
+
+    def test_is_muted_returns_true(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+        assert Mute.objects.is_muted(self.alice, self.bob) is True
+
+    def test_is_muted_is_directional(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+
+        assert Mute.objects.is_muted(self.alice, self.bob) is True
+        assert Mute.objects.is_muted(self.bob, self.alice) is False
+
+    def test_is_muted_returns_false(self):
+        assert Mute.objects.is_muted(self.alice, self.bob) is False
+
+    def test_muted_user_ids(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+        Mute.objects.create(muter=self.alice, muted=self.charlie)
+
+        ids = Mute.objects.muted_user_ids(self.alice)
+        assert ids == {self.bob.id, self.charlie.id}
+
+    def test_muted_user_ids_empty(self):
+        ids = Mute.objects.muted_user_ids(self.alice)
+        assert ids == set()
+
+
+class TestConvenienceFunctions(TestCase):
+    def setUp(self):
+        self.alice = User.objects.create_user(
+            email="alice@example.com", username="alice", password="TestPass123!"
+        )
+
+        self.bob = User.objects.create_user(
+            email="bob@example.com", username="bob", password="TestPass123!"
+        )
+
+    def test_is_blocked_convenience(self):
+        Block.objects.create(blocker=self.alice, blocked=self.bob)
+        assert is_blocked(self.alice, self.bob) is True
+        assert is_blocked(self.bob, self.alice) is False
+
+    def test_is_either_blocked_convenience(self):
+        Block.objects.create(blocker=self.alice, blocked=self.bob)
+        assert is_either_blocked(self.alice, self.bob) is True
+        assert is_either_blocked(self.bob, self.alice) is True
+
+    def test_is_muted_convenience(self):
+        Mute.objects.create(muter=self.alice, muted=self.bob)
+        assert is_muted(self.alice, self.bob) is True
+        assert is_muted(self.bob, self.alice) is False

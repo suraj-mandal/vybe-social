@@ -3,7 +3,8 @@ import uuid
 from django.conf import settings
 from django.db import models
 
-from apps.moderation.managers import BlockManager, MuteManager, User
+from apps.accounts.models import User
+from apps.moderation.managers import BlockManager, MuteManager
 
 # Create your models here.
 

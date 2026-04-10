@@ -50,7 +50,8 @@ class FriendRequestManager(models.Manager):
         :rtype: bool
         """
         return self.filter(
-            Q(sender=first_user, receiver=second_user) | Q(sender=second_user, receiver=first_user),
+            Q(sender=first_user, receiver=second_user)
+            | Q(sender=second_user, receiver=first_user),
             status="accepted",
         ).exists()
 

@@ -10,7 +10,9 @@ from .models import Profile
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_user_profile(sender: type[User], instance: User, created: bool, **kwargs: dict[str, Any]) -> None:
+def create_user_profile(
+    sender: type[User], instance: User, created: bool, **kwargs: dict[str, Any]
+) -> None:
     """
     Signal receiver function that creates a user profile whenever a new user is created.
     This function listens for the `post_save` signal emitted by the user model. When a new user

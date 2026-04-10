@@ -17,16 +17,26 @@ class FriendRequest(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_friend_requests")
-
-    receiver = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="received_friend_requests"
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="sent_friend_requests",
     )
 
-    status = models.CharField(max_length=10, choices=Status, default=Status.PENDING)
+    receiver = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="received_friend_requests",
+    )
+
+    status = models.CharField(
+        max_length=10, choices=Status, default=Status.PENDING
+    )
 
     message = models.TextField(
-        max_length=300, blank=True, help_text="Optional message from the sender to introduce themselves."
+        max_length=300,
+        blank=True,
+        help_text="Optional message from the sender to introduce themselves.",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -42,7 +52,9 @@ class FriendRequest(models.Model):
 
         constraints = [
             models.UniqueConstraint(
-                Least("sender", "receiver"), Greatest("sender", "receiver"), name="unique_friend_pair"
+                Least("sender", "receiver"),
+                Greatest("sender", "receiver"),
+                name="unique_friend_pair",
             ),
             models.CheckConstraint(
                 condition=~models.Q(sender=models.F("receiver")),
@@ -73,7 +85,10 @@ def are_friends(first_user: User, second_user: User) -> bool:
 
 
 def update_friend_request_to_pending(
-    existing_friend_request: FriendRequest, sender: User, receiver: User, message: str
+    existing_friend_request: FriendRequest,
+    sender: User,
+    receiver: User,
+    message: str,
 ) -> FriendRequest:
     with transaction.atomic():
         existing_friend_request.sender = sender

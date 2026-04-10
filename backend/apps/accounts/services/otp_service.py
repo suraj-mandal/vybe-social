@@ -105,7 +105,9 @@ def verify_otp(phone_number: str, otp: str) -> bool:
     stored_hash = redis.get(code_key)
 
     if not stored_hash:
-        raise ValueError("OTP has expired or was never sent. Request a new one.")
+        raise ValueError(
+            "OTP has expired or was never sent. Request a new one."
+        )
 
     if isinstance(stored_hash, bytes):
         stored_hash = stored_hash.decode()

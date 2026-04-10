@@ -80,7 +80,9 @@ class GoogleAuthService:
                  name, last name, and the provider user ID from the verified token.
         :rtype: SocialAuthUser
         """
-        response = requests.get(cls.TOKENINFO_URL, params={"id_token": token}, timeout=10)
+        response = requests.get(
+            cls.TOKENINFO_URL, params={"id_token": token}, timeout=10
+        )
 
         if response.status_code != 200:
             raise ValueError("Invalid Google token.")
@@ -117,7 +119,9 @@ class FacebookAuthService:
     :type GRAPH_API_URL: str
     """
 
-    GRAPH_API_URL = f"https://graph.facebook.com/{settings.FACEBOOK_GRAPHQL_VERSION}/me"
+    GRAPH_API_URL = (
+        f"https://graph.facebook.com/{settings.FACEBOOK_GRAPHQL_VERSION}/me"
+    )
 
     @classmethod
     def verify_token(cls, token: str) -> SocialAuthUser:
@@ -136,7 +140,12 @@ class FacebookAuthService:
         :rtype: SocialAuthUser
         """
         response = requests.get(
-            cls.GRAPH_API_URL, params={"fields": "id,email,first_name,last_name", "access_token": token}, timeout=10
+            cls.GRAPH_API_URL,
+            params={
+                "fields": "id,email,first_name,last_name",
+                "access_token": token,
+            },
+            timeout=10,
         )
 
         if response.status_code != 200:
@@ -145,7 +154,9 @@ class FacebookAuthService:
         data = response.json()
 
         if "email" not in data:
-            raise ValueError("Email not available from Facebook. Please grant email permission.")
+            raise ValueError(
+                "Email not available from Facebook. Please grant email permission."
+            )
 
         return SocialAuthUser.model_validate(
             {

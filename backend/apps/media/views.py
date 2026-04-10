@@ -8,15 +8,25 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import Media
-from .s3_service import delete_s3_object, generate_presigned_upload_url, verify_s3_object
-from .serializers import ConfirmUploadSerializer, MediaSerializer, PresignUploadSerializer
+from .s3_service import (
+    delete_s3_object,
+    generate_presigned_upload_url,
+    verify_s3_object,
+)
+from .serializers import (
+    ConfirmUploadSerializer,
+    MediaSerializer,
+    PresignUploadSerializer,
+)
 
 
 class PresignUploadView(generics.GenericAPIView):
     serializer_class = PresignUploadSerializer
     permission_classes = [IsAuthenticated]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -41,7 +51,11 @@ class PresignUploadView(generics.GenericAPIView):
         )
 
         return Response(
-            {"upload_url": presign_result["upload_url"], "s3_key": presign_result["s3_key"], "media_id": str(media.id)},
+            {
+                "upload_url": presign_result["upload_url"],
+                "s3_key": presign_result["s3_key"],
+                "media_id": str(media.id),
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -50,7 +64,9 @@ class ConfirmUploadView(generics.GenericAPIView):
     serializer_class = ConfirmUploadSerializer
     permission_classes = [IsAuthenticated]
 
-    def post(self, request: Request, *args: list[Any], **kwargs: dict[str, Any]) -> Response:
+    def post(
+        self, request: Request, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

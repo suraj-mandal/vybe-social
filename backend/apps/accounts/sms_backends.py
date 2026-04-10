@@ -34,7 +34,9 @@ class ConsoleSMSBackend:
         :type message: str
         :return: None
         """
-        logger.info(f"\n{'=' * 50}\nSMS to {phone_number}:\n{message}\n{'=' * 50}\n")
+        logger.info(
+            f"\n{'=' * 50}\nSMS to {phone_number}:\n{message}\n{'=' * 50}\n"
+        )
 
 
 class TwilioSMSBackend:

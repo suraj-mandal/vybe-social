@@ -139,7 +139,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             pattern of containing only letters, numbers, and underscores.
         """
         if not re.match("^[a-zA-Z0-9_]+$", value):
-            raise serializers.ValidationError("Username can only contain letters, numbers, and underscores.")
+            raise serializers.ValidationError(
+                "Username can only contain letters, numbers, and underscores."
+            )
 
         return value
 
@@ -162,7 +164,9 @@ class RegisterSerializer(serializers.ModelSerializer):
                                               do not match.
         """
         if attrs["password"] != attrs["password_confirm"]:
-            raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
+            raise serializers.ValidationError(
+                {"password_confirm": "Passwords do not match."}
+            )
 
         return attrs
 
@@ -226,15 +230,21 @@ class VerifyEmailSerializer(serializers.Serializer):
             user_id = force_str(urlsafe_base64_decode(attrs["uid"]))
             user = User.objects.get(pk=user_id)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist) as err:
-            raise serializers.ValidationError({"uid": "Invalid or expired verification link."}) from err
+            raise serializers.ValidationError(
+                {"uid": "Invalid or expired verification link."}
+            ) from err
 
         # verifying the token
         if not default_token_generator.check_token(user, attrs["token"]):
-            raise serializers.ValidationError({"token": "Invalid or expired verification link."})
+            raise serializers.ValidationError(
+                {"token": "Invalid or expired verification link."}
+            )
 
         # check if the user is already verified or not
         if user.is_verified:
-            raise serializers.ValidationError("This email has already been verified.")
+            raise serializers.ValidationError(
+                "This email has already been verified."
+            )
 
         attrs["user"] = user
         return attrs
@@ -314,17 +324,23 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             - The reset token is invalid or expired.
         """
         if attrs["new_password"] != attrs["new_password_confirm"]:
-            raise serializers.ValidationError({"new_password_confirm": "Passwords do not match."})
+            raise serializers.ValidationError(
+                {"new_password_confirm": "Passwords do not match."}
+            )
 
         try:
             user_id = force_str(urlsafe_base64_decode(attrs["uid"]))
             user = User.objects.get(pk=user_id)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist) as err:
-            raise serializers.ValidationError({"uid": "Invalid or expired reset link."}) from err
+            raise serializers.ValidationError(
+                {"uid": "Invalid or expired reset link."}
+            ) from err
 
         # verify the token
         if not default_token_generator.check_token(user, attrs["token"]):
-            raise serializers.ValidationError({"token": "Invalid or expired reset link."})
+            raise serializers.ValidationError(
+                {"token": "Invalid or expired reset link."}
+            )
 
         attrs["user"] = user
         return attrs
@@ -379,7 +395,9 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs: AttrType) -> AttrType:
         if attrs["new_password"] != attrs["new_password_confirm"]:
-            raise serializers.ValidationError({"new_password_confirm": "Passwords do not match."})
+            raise serializers.ValidationError(
+                {"new_password_confirm": "Passwords do not match."}
+            )
 
         return attrs
 
@@ -428,7 +446,9 @@ class SocialAuthSerializer(serializers.Serializer):
         service: SocialAuthService | None = provider_services.get(provider)
 
         if not service:
-            raise serializers.ValidationError({"provider": f"Unsupported provider: {provider}"})
+            raise serializers.ValidationError(
+                {"provider": f"Unsupported provider: {provider}"}
+            )
 
         try:
             user_info = service.verify_token(access_token)
@@ -494,7 +514,9 @@ class VerifyOTPSerializer(serializers.Serializer):
     """
 
     phone_number = serializers.CharField(max_length=20)
-    otp = serializers.CharField(min_length=settings.OTP_LENGTH, max_length=settings.OTP_LENGTH)
+    otp = serializers.CharField(
+        min_length=settings.OTP_LENGTH, max_length=settings.OTP_LENGTH
+    )
 
     def validate_phone_number(self, value: str) -> str:
         """
