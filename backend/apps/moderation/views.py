@@ -4,6 +4,8 @@ from collections.abc import Iterable
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from moderation.models import Mute
+from moderation.serializers import MutedUserSerializer
 from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -132,7 +134,7 @@ class UnblockUserView(APIView):
 
 class BlockedUsersListView(ListAPIView):
     """
-    GET /api/blocks
+    GET /api/blocks/
     Represent a view for retrieving a list of blocked users.
 
     This class provides functionality to fetch and serialize information about
@@ -158,4 +160,133 @@ class BlockedUsersListView(ListAPIView):
         """
         return Block.objects.filter(blocker=self.request.user).select_related(
             "blocked"
+        )
+
+
+class MuteUserView(APIView):
+    """
+    POST /api/mutes/<uuid:user_id>/
+
+    Handles muting of a user by the authenticated user.
+
+    This view allows an authenticated user to mute another user. It ensures that
+    a user cannot mute themselves or mute the same user multiple times. Upon
+    success, it records the mute relationship between the muter and the muted
+    user.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request, user_id: str) -> Response:
+        """
+        Handles the muting of a user identified by their user ID. The method ensures that a user cannot mute themselves,
+        prevents duplicate mute actions, and creates a mute record when valid conditions are met. Returns a JSON response
+        indicating the status of the operation.
+
+        :param request: The HTTP request object containing the user initiating the mute action.
+        :type request: Request
+        :param user_id: The unique identifier of the user to be muted.
+        :type user_id: str
+        :return: An HTTP response with a success message upon successful muting or an error message otherwise.
+        :rtype: Response
+        """
+        muted_user: User = get_object_or_404(User, id=user_id)
+        muter: User = request.user  # type: ignore[assignment]
+
+        if muted_user == muter:
+            return Response(
+                {"detail": "You cannot mute yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if Mute.objects.is_muted(muter, muted_user):
+            return Response(
+                {"detail": "You have already muted this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        Mute.objects.create(muter=muter, muted=muted_user)
+
+        return Response(
+            {"detail": f"You have muted {muted_user.username}"},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class UnmuteUserView(APIView):
+    """
+    DELETE /api/mutes/<uuid:user_id>/unmute/
+
+    Provides functionality to unmute a previously muted user.
+
+    This view handles the deletion of a mute relationship between the current user
+    and the specified user, allowing the current user to unmute another user. It
+    requires the user to be authenticated and ensures that a mute relationship
+    exists before removing it.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request: Request, user_id: str) -> Response:
+        """
+        Handles the deletion of a mute relationship between the current user and a specified user.
+
+        The method checks if the current user has muted the target user. If the mute relationship
+        exists, it deletes the relationship, effectively unmuting the target user. If the mute
+        relationship does not exist, a response indicating this is returned.
+
+        :param request: The HTTP request object containing details about the current request.
+        :type request: Request
+        :param user_id: The unique identifier of the user to unmute.
+        :type user_id: str
+        :return: A response indicating the result of the unmute operation. Returns a 204 No Content
+                 status if the unmute is successful, or a 400 Bad Request status if no mute relationship
+                 exists.
+        :rtype: Response
+        """
+        user_to_unmute: User = get_object_or_404(User, id=user_id)
+        current_user: User = request.user  # type: ignore[assignment]
+
+        mute: Mute | None = Mute.objects.filter(
+            muter=current_user, muted=user_to_unmute
+        ).first()
+
+        if not mute:
+            return Response(
+                {"detail": "You have not muted this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        mute.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MutedUsersListView(ListAPIView):
+    """
+    GET /api/mutes/
+
+    Handles the listing of muted users for the authenticated user.
+
+    This class-based view retrieves and displays the list of users muted by the
+    currently authenticated user. It enforces authentication and uses serialization
+    to format the data appropriately.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = MutedUserSerializer
+
+    def get_queryset(self) -> Iterable[MutedUserSerializer]:
+        """
+        Fetches the list of users muted by the currently authenticated user.
+
+        This method retrieves queryset objects representing users muted by the currently
+        authenticated user. It performs database filtering based on the `muter` field, which
+        is set to the currently requesting user. The muted users are fetched with their
+        related data for performance optimization using `select_related`.
+
+        :return: Queryset of muted users serialized with `MutedUserSerializer`
+        :rtype: Iterable[MutedUserSerializer]
+        """
+        return Mute.objects.filter(muter=self.request.user).select_related(
+            "muted"
         )
