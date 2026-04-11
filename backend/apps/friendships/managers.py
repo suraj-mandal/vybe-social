@@ -1,13 +1,11 @@
-from collections.abc import Iterable
-
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 
 from apps.accounts.models import User
 
 
 class FriendRequestManager(models.Manager):
-    def friends_of(self, user: User) -> Iterable[User]:
+    def friends_of(self, user: User) -> QuerySet:
         """
         Returns a list of users who are friends of the specified user by checking
         accepted friend requests. The function identifies all requests where the

@@ -56,6 +56,7 @@ LOCAL_APPS = [
     "apps.media",
     "apps.friendships",
     "apps.moderation",
+    "apps.posts",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -168,6 +169,11 @@ MEDIA_ALLOWED_VIDEO_TYPES = [
     "video/webm",
     "video/quicktime",
 ]
+
+# Post related settings
+POSTS_MAX_IMAGES_PER_POST = 10
+POSTS_MAX_VIDEOS_PER_POST = 4
+POSTS_PAGE_SIZE = 20
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
