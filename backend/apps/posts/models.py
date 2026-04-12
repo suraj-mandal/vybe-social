@@ -134,7 +134,6 @@ class Post(models.Model):
 
     # ruff: noqa
     objects = PostManager()
-    # ruff: noqa
     all_objects = models.Manager()
 
     class Meta:
