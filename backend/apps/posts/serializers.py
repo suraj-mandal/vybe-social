@@ -9,7 +9,6 @@ from apps.accounts.models import User
 from apps.media.models import Media
 from apps.media.s3_service import generate_presigned_read_url
 from apps.posts.models import Post, PostMedia
-from apps.profiles.models import Profile
 
 
 class PostAuthorSerializer(serializers.ModelSerializer):
@@ -50,8 +49,8 @@ class PostAuthorSerializer(serializers.ModelSerializer):
         :return: A presigned URL to access the avatar image if it exists, else None.
         :rtype: Optional[str]
         """
-        profile: Profile | None = getattr(user, "profile", None)
-        if profile is None or profile.avatar.id is None:
+        profile = getattr(user, "profile", None)
+        if profile is None or profile.avatar_id is None:
             return None
 
         return generate_presigned_read_url(profile.avatar.s3_key)
@@ -319,14 +318,14 @@ class PostCreateSerializer(serializers.ModelSerializer):
             if media.media_type == Media.MediaType.VIDEO
         )
 
-        if image_count > settings.POST_MAX_IMAGES_PER_POST:
+        if image_count > settings.POSTS_MAX_IMAGES_PER_POST:
             raise serializers.ValidationError(
-                f"A post can have at most {settings.POST_MAX_IMAGES_PER_POST} images."
+                f"A post can have at most {settings.POSTS_MAX_IMAGES_PER_POST} images."
             )
 
-        if video_count > settings.POST_MAX_VIDEOS_PER_POST:
+        if video_count > settings.POSTS_MAX_VIDEOS_PER_POST:
             raise serializers.ValidationError(
-                f"A post can have at most {settings.POST_MAX_VIDEOS_PER_POST} images."
+                f"A post can have at most {settings.POSTS_MAX_VIDEOS_PER_POST} videos."
             )
 
         attrs["media_by_id"] = {m.id: m for m in media_rows}
