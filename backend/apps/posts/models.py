@@ -132,7 +132,7 @@ class Post(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
-    # ruff: noqa
+    # ruff: noqa: DJ012
     objects = PostManager()
     all_objects = models.Manager()
 
