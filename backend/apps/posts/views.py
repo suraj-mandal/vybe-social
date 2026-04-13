@@ -1,6 +1,5 @@
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
-from posts.selectors import publish_post
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -16,6 +15,7 @@ from apps.posts.permissions import IsAuthorOrReadOnly
 from apps.posts.selectors import (
     accessible_posts_for,
     drafts_for,
+    publish_post,
     visible_posts_for,
 )
 from apps.posts.serializers import (
