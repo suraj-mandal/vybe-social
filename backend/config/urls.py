@@ -18,6 +18,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.posts.views import UserPostsListView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/accounts/", include("apps.accounts.urls")),
@@ -26,4 +28,10 @@ urlpatterns = [
     path("api/media/", include("apps.media.urls")),
     path("api/friends/", include("apps.friendships.urls")),
     path("api/moderation/", include("apps.moderation.urls")),
+    path("api/posts/", include("apps.posts.urls")),
+    path(
+        "api/profiles/<str:username>/posts/",
+        UserPostsListView.as_view(),
+        name="profile-posts",
+    ),
 ]
