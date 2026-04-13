@@ -70,14 +70,14 @@ class PostListCreateView(generics.ListCreateAPIView):
         :param self: The current view instance.
         :return: A QuerySet of Post objects filtered and ordered based on the specified query parameters.
 
-        :param source: A string query parameter indicating the source of the posts.
+        :param ?source: A string query parameter indicating the source of the posts.
             Accepted values include:
                 - "all" (default): Includes all visible posts.
                 - "mine": Includes posts authored by the requesting user.
                 - "friends": Includes posts authored by the friends of the requesting user.
         :raises ValidationError: If 'source' does not belong to the list of valid feed sources.
 
-        :param ordering: A string query parameter indicating the preferred ordering of the posts.
+        :param ?ordering: A string query parameter indicating the preferred ordering of the posts.
             Possible values include:
                 - "new" (default): Orders posts by their creation date in descending order.
                 - Other valid feed ordering options defined in the global `FEED_ORDERINGS` set.
