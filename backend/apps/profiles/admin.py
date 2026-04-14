@@ -27,7 +27,21 @@ class ProfileAdmin(admin.ModelAdmin):
     :type readonly_fields: list[str]
     """
 
-    list_display = ["user", "location", "created_at"]
-    search_fields = ["user__username", "user__email", "location"]
-    raw_id_fields = ["user"]
-    readonly_fields = ["created_at", "updated_at"]
+    list_display = [
+        "user",
+        "gender",
+        "location",
+        "created_at",
+    ]
+    search_fields = [
+        "user__username",
+        "user__email",
+        "location",
+    ]
+    raw_id_fields = [
+        "user",
+    ]
+    readonly_fields = [
+        "created_at",
+        "updated_at",
+    ]

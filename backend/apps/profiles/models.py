@@ -7,6 +7,11 @@ from django.db import models
 
 
 class Profile(models.Model):
+    class Gender(models.TextChoices):
+        MALE = "male", "Male"
+        FEMALE = "female", "Female"
+        OTHER = "other", "Other"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     user = models.OneToOneField(
@@ -39,6 +44,13 @@ class Profile(models.Model):
     )
 
     date_of_birth = models.DateField(null=True, blank=True)
+
+    gender = models.CharField(
+        max_length=10,
+        choices=Gender,
+        blank=True,
+        help_text="User's gender - optional, useful for recommendations.",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
