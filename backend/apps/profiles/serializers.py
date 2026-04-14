@@ -59,6 +59,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "bio",
+            "gender",
             "avatar",  # write - accepts media UUID
             "avatar_url",  # read - returns presigned URL
             "location",
