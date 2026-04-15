@@ -170,10 +170,21 @@ MEDIA_ALLOWED_VIDEO_TYPES = [
     "video/quicktime",
 ]
 
-# Post related settings
+# Post-related settings
 POSTS_MAX_IMAGES_PER_POST = 10
 POSTS_MAX_VIDEOS_PER_POST = 4
 POSTS_PAGE_SIZE = 20
+
+# Comment related settings
+COMMENT_MAX_LENGTH = 2000
+COMMENT_MAX_REPLY_DEPTH = 1
+
+# Pagination for comments and reactions
+COMMENTS_PAGE_SIZE = 20
+REACTIONS_PAGE_SIZE = 40
+
+# Mention parsing for the comments
+MENTION_REGEX = r"@([\w.+-]+)"
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
