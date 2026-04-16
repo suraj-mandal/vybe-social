@@ -2,9 +2,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
-from posts.pagination import RepliesCursorPagination
-from posts.selectors import replies_for_comment
-from posts.serializers import ReplySerializer
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import BasePermission, IsAuthenticated
@@ -19,6 +16,7 @@ from apps.posts.pagination import (
     CommentCursorPagination,
     PostCursorPagination,
     ReactionCursorPagination,
+    RepliesCursorPagination,
 )
 from apps.posts.permissions import CanCommentOnPost, IsAuthorOrReadOnly
 from apps.posts.selectors import (
@@ -27,6 +25,7 @@ from apps.posts.selectors import (
     drafts_for,
     publish_post,
     reactions_for_target,
+    replies_for_comment,
     visible_posts_for,
 )
 from apps.posts.serializers import (
@@ -38,6 +37,7 @@ from apps.posts.serializers import (
     PostUpdateSerializer,
     ReactionSerializer,
     ReactionUpsertSerializer,
+    ReplySerializer,
 )
 
 FEED_SOURCES = {
