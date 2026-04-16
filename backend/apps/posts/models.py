@@ -440,9 +440,9 @@ class Comment(models.Model):
     :ivar updated_at: The timestamp when the comment was last updated.
     :type updated_at: datetime
 
-    :ivar reaction: Generic relation to manage reactions (e.g., likes or emoticons)
+    :ivar reactions: Generic relation to manage reactions (e.g., likes or emoticons)
         associated with the comment.
-    :type reaction: GenericRelation
+    :type reactions: GenericRelation
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -480,7 +480,7 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    reaction = GenericRelation(
+    reactions = GenericRelation(
         "posts.Reaction",
         related_query_name="comment",
     )

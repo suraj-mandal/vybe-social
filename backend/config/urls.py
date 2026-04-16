@@ -29,6 +29,7 @@ urlpatterns = [
     path("api/friends/", include("apps.friendships.urls")),
     path("api/moderation/", include("apps.moderation.urls")),
     path("api/posts/", include("apps.posts.urls")),
+    path("api/comments/", include("apps.posts.comment_urls")),
     path(
         "api/profiles/<str:username>/posts/",
         UserPostsListView.as_view(),

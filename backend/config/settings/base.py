@@ -179,8 +179,14 @@ POSTS_PAGE_SIZE = 20
 COMMENT_MAX_LENGTH = 2000
 COMMENT_MAX_REPLY_DEPTH = 1
 
+# Reaction related settings
+REACTIONS_PAGE_SIZE = 15
+
+
 # Pagination for comments and reactions
-COMMENTS_PAGE_SIZE = 20
+COMMENTS_PAGE_SIZE = 10
+REPLIES_PAGE_SIZE = 10
+REPLIES_INLINE_PREVIEW = 3
 REACTIONS_PAGE_SIZE = 40
 
 # Mention parsing for the comments
