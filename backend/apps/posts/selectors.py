@@ -20,9 +20,13 @@ from apps.friendships.models import FriendRequest
 from apps.moderation.models import Block
 from apps.posts.models import Comment, Post, PostMedia, Reaction
 
+type ContentModel = type[Comment] | type[Post]
+
 
 # creating selectors for reactions for the user
-def _reaction_annotations(user: User, model_class) -> dict[str, Any]:
+def _reaction_annotations(
+    user: User, model_class: ContentModel
+) -> dict[str, Any]:
     """
     Generates reaction-related metadata for a given comment or post, including counts
     for various reaction types and the current user's reaction, if any. The function

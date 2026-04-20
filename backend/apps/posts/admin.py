@@ -109,7 +109,7 @@ class ReactionAdmin(admin.ModelAdmin):
     raw_id_fields = ("user",)
 
 
-class CommentMentionInline(GenericTabularInline):
+class CommentMentionInline(admin.TabularInline):
     model = CommentMention
     extra = 0
     readonly_fields = (

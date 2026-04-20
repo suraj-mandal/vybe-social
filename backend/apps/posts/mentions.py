@@ -10,7 +10,7 @@ from apps.posts.models import Comment, CommentMention
 User = get_user_model()
 
 
-def extract_usernames(content: str) -> list[str]:
+def extract_usernames(content: str | None) -> list[str]:
     """
     Extract unique usernames mentioned in the provided content using a predefined mention pattern.
 
