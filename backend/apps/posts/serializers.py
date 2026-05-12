@@ -672,6 +672,10 @@ class PostSerializer(ReactionAnnotationMixin, serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "media",
+            "reactions_count",
+            "reactions_breakdown",
+            "user_reaction",
+            "comments_count",
         ]
         read_only_fields = [
             "id",
@@ -682,6 +686,10 @@ class PostSerializer(ReactionAnnotationMixin, serializers.ModelSerializer):
             "is_edited",
             "created_at",
             "updated_at",
+            "reactions_count",
+            "reactions_breakdown",
+            "user_reaction",
+            "comments_count",
         ]
 
     def get_comments_count(self, post: Post) -> int:

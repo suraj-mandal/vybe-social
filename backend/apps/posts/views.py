@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import QuerySet
@@ -52,7 +54,7 @@ FEED_ORDERINGS = {
 }
 
 
-class _BaseReactionView(APIView):
+class _BaseReactionView(APIView, ABC):
     """
     Represents a base view for handling user reactions to specific targets.
 
@@ -68,8 +70,8 @@ class _BaseReactionView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get_target(self, request: Request, pk: str):
-        raise NotImplementedError
+    @abstractmethod
+    def get_target(self, request: Request, pk: str) -> Post | Comment: ...
 
     def post(self, request: Request, pk: str):
         """
@@ -109,7 +111,7 @@ class _BaseReactionView(APIView):
             status=status_code,
         )
 
-    def delete(self, request, pk):
+    def delete(self, request, pk: str):
         """
         Handles the deletion of a reaction associated with a specific target object and user.
         Deletes the reaction data from the database and returns an appropriate HTTP response.
@@ -117,7 +119,7 @@ class _BaseReactionView(APIView):
         :param request: The HTTP request object containing user and request data.
         :type request: HttpRequest
         :param pk: The primary key of the target object for which the reaction is to be deleted.
-        :type pk: int
+        :type pk: str
         :return: An HTTP response indicating that the reaction has been successfully deleted.
         :rtype: Response
         """

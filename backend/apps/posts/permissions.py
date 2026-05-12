@@ -113,8 +113,15 @@ class CanCommentOnPost(BasePermission):
                 return False  # no one can comment
             case Post.Visibility.FRIENDS:
                 request_user: User = request.user  # type: ignore[assignment]
-                return FriendRequest.objects.are_friends(
-                    request_user, obj.author
+                # if the author is the one commenting on their post, and
+                # it is possible to comment
+                # because by default, the author is not a friend of themselves.
+                # so this condition needs to be added.
+                return (
+                    request_user == obj.author
+                    or FriendRequest.objects.are_friends(
+                        request_user, obj.author
+                    )
                 )
             case _:
                 return False

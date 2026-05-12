@@ -87,7 +87,10 @@ class TestPostSerializer(TestCase):
             visibility=Post.Visibility.PUBLIC,
         )
 
-    @patch("apps.posts.serializers.generate_presigned_read_url")
+    @patch(
+        "apps.posts.serializers.generate_presigned_read_url",
+        return_value="https://signed",
+    )
     def test_serializes_post_with_author_and_empty_media(self, _mock_presign):
         data = PostSerializer(self.post).data
 

@@ -20,7 +20,7 @@ urlpatterns = [
         name="post-react",
     ),
     path(
-        "<uuid:pk>/reactions/list",
+        "<uuid:pk>/reactions/list/",
         views.PostReactionsListView.as_view(),
         name="post-reactions-list",
     ),

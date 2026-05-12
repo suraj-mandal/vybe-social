@@ -34,6 +34,9 @@ class PostCommentTestBase(TestCase):
 
         self.client: APIClient = APIClient()
 
+    def _auth(self, user: User | None):
+        self.client.force_authenticate(user=user)
+
     def _make_post(
         self,
         author: User = None,
