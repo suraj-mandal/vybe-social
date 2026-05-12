@@ -13,4 +13,21 @@ urlpatterns = [
         views.PublishPostView.as_view(),
         name="post-publish",
     ),
+    # reactions on posts
+    path(
+        "<uuid:pk>/reactions/",
+        views.PostReactionView.as_view(),
+        name="post-react",
+    ),
+    path(
+        "<uuid:pk>/reactions/list/",
+        views.PostReactionsListView.as_view(),
+        name="post-reactions-list",
+    ),
+    # comments on posts
+    path(
+        "<uuid:pk>/comments/",
+        views.PostCommentsView.as_view(),
+        name="post-comments",
+    ),
 ]

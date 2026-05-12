@@ -1,8 +1,11 @@
 from rest_framework import permissions
+from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from apps.accounts.models import User
+from apps.friendships.models import FriendRequest
+from apps.posts.models import Post
 
 
 class IsAuthorOrReadOnly(permissions.BasePermission):
@@ -55,5 +58,70 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
         """
         if request.method in permissions.SAFE_METHODS:
             return True
+        owner = getattr(obj, "author", None) or getattr(obj, "user", None)
         request_user: User = request.user  # type: ignore[assignment]
-        return obj.author_id == request_user.id
+        return owner == request_user
+
+
+class CanCommentOnPost(BasePermission):
+    """
+    Determines if a user has permission to comment on a specific post.
+
+    This class extends BasePermission and provides custom permissions
+    to determine whether a given user can comment on a post based on
+    the post's visibility and their relationship with the post's author.
+    It defines logic for both general permission checks and object-specific
+    permission checks.
+
+    :ivar message: The default message returned when the permission is denied.
+    :type message: str
+    """
+
+    message = "You can't comment on this post."
+
+    def has_permission(self, request: Request, view) -> bool:
+        """
+        Checks if the user associated with the request has the necessary permission
+        to access a given view. This method ensures that the user is authenticated
+        before granting permission.
+
+        :param request: The HTTP request containing user authentication information.
+        :type request: Request
+        :param view: The view against which permission is being checked.
+        :return: True if the user is authenticated and has permission, False otherwise.
+        :rtype: bool
+        """
+        return bool(request.user and request.user.is_authenticated)
+
+    def has_object_permission(self, request, view, obj: Post) -> bool:
+        """
+        Determines if the user has permission to interact with the object based on its visibility rules.
+
+        :param request: The HTTP request object containing metadata about the current user and request context.
+        :type request: HttpRequest
+        :param view: The view instance that is associated with the request.
+        :type view: Any
+        :param obj: The object (Post) whose permissions need to be evaluated.
+        :type obj: Post
+        :return: A boolean value indicating whether the user has the permission to interact with the object.
+        :rtype: bool
+        """
+        match obj.visibility:
+            case Post.Visibility.PUBLIC:
+                return True  # anyone can comment
+            case Post.Visibility.PRIVATE:
+                return False  # no one can comment
+            case Post.Visibility.FRIENDS:
+                request_user: User = request.user  # type: ignore[assignment]
+                # if the author is the one commenting on their post, and
+                # it is possible to comment
+                # because by default, the author is not a friend of themselves.
+                # so this condition needs to be added.
+                return (
+                    request_user == obj.author
+                    or FriendRequest.objects.are_friends(
+                        request_user, obj.author
+                    )
+                )
+            case _:
+                return False
