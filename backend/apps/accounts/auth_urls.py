@@ -55,4 +55,9 @@ urlpatterns = [
         views.LogoutFromAllDevicesView.as_view(),
         name="logout-all",
     ),
+    path(
+        "me/",
+        views.CurrentUserView.as_view(),
+        name="me",
+    ),
 ]
