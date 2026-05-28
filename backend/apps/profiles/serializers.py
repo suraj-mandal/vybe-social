@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from apps.media.models import Media
@@ -27,6 +28,22 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     # get the username from the related User - read-only, for display
     username = serializers.CharField(source="user.username", read_only=True)
+
+    # sourced from the user
+    first_name = serializers.CharField(
+        source="user.first_name",
+        max_length=150,
+        required=False,
+        allow_blank=True,
+    )
+
+    last_name = serializers.CharField(
+        source="user.last_name",
+        max_length=150,
+        required=False,
+        allow_blank=True,
+    )
+
     avatar_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -58,6 +75,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
+            "first_name",  # will be part of the onboarding flow
+            "last_name",
             "bio",
             "gender",
             "avatar",  # write - accepts media UUID
@@ -65,6 +84,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "location",
             "website",
             "date_of_birth",
+            "onboarding_complete",
             "created_at",
             "updated_at",
         ]
@@ -96,3 +116,23 @@ class ProfileSerializer(serializers.ModelSerializer):
             return None
 
         return generate_presigned_read_url(profile_avatar.s3_key)
+
+    def update(self, instance: Profile, validated_data: dict) -> Profile:
+
+        # getting the user data
+        user_data = validated_data.pop("user", {})
+
+        with transaction.atomic():
+            if user_data:
+                user = instance.user
+                for attr, value in user_data.items():
+                    setattr(user, attr, value)
+                user.save(update_fields=list(user_data.keys()))
+
+            # apply profile fields
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+
+            instance.save()
+
+        return instance

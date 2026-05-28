@@ -10,6 +10,9 @@ from rest_framework_simplejwt.token_blacklist.models import (
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.profiles.models import Profile
+from apps.profiles.serializers import ProfileSerializer
+
 from .emails import send_password_reset_email, send_verification_email
 from .models import SocialAccount, User
 from .serializers import (
@@ -28,6 +31,52 @@ from .services import SocialAuthUser, generate_otp, verify_otp
 from .sms_backends import get_sms_backend
 
 # Create your views here.
+
+
+# Current User view, that will be used for the authenticated
+# user's full identity state for the frontend to make routing decisions
+class CurrentUserView(generics.RetrieveAPIView):
+    """
+    Provides a view to retrieve the current authenticated user's information along with their profile
+    details.
+
+    This class handles retrieving the authenticated user's information and their associated profile
+    data, including relationships such as the user's avatar. It is intended to serve endpoints
+    requiring the current user's data and profile details.
+
+    :ivar permission_classes: Permissions required to access the view. Only authenticated users are
+                              allowed.
+    :type permission_classes: list[permission]
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, *args, **kwargs) -> Response:
+        """
+        Handles the HTTP GET request by returning the serialized data for the user and their
+        profile.
+
+        The method retrieves the authenticated user associated with the request, fetches
+        their profile using a database query with related user and avatar data, and outputs
+        the serialized details for both the user and their profile within the response.
+
+        :param request: The HTTP request object containing metadata and user authentication
+                        context as a `Request` instance.
+        :param args: Additional positional arguments passed to the method.
+        :param kwargs: Additional keyword arguments passed to the method.
+        :return: A `Response` object containing the serialized data of the user and profile.
+        """
+        user: User = request.user  # type: ignore[assignment]
+        profile = Profile.objects.select_related("user", "avatar").get(
+            user=user
+        )
+
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "profile": ProfileSerializer(profile).data,
+            }
+        )
 
 
 class UserListView(generics.ListAPIView):

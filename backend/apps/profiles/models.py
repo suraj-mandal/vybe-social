@@ -52,6 +52,15 @@ class Profile(models.Model):
         help_text="User's gender - optional, useful for recommendations.",
     )
 
+    onboarding_complete = models.BooleanField(
+        default=False,
+        help_text=(
+            "Flipped to True once the user submits the profile-completion "
+            "form (or skips with defaults). Frontend gates the onboarding "
+            "modal on this flag."
+        ),
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
